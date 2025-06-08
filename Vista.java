@@ -4,8 +4,6 @@ import javax.swing.*;
 import java.awt.*;
 
 public class Vista extends JFrame {
-
-	private JFrame frame;
 	
     private JMenuBar menu;
     private PanelGrilla grilla;

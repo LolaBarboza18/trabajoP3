@@ -9,8 +9,7 @@ import java.util.List;
 
 public class PanelGrilla extends JPanel {
 
-	// private int[][] grilla;
-//	private Grilla grilla;
+	private Grilla grilla;
 	private Integer[][] matrizGrilla;
 	private int filas;
 	private int columnas;
@@ -25,7 +24,8 @@ public class PanelGrilla extends JPanel {
 	
 	public PanelGrilla() {
 		initialize();
-        dibujarGrillaDefault();
+//      dibujarGrillaDefault();
+//		ya no se inicializa la grilla acá, es null hasta que se cargue
 	}
 
 	/**
@@ -50,33 +50,19 @@ public class PanelGrilla extends JPanel {
 		});
 	}
 	
-	 private void dibujarGrillaDefault() {
-	        // grilla de ejemplo, asumo q esto después se puede hacer en logica 
-	        filas = 3;
-	        columnas = 4;
-	        matrizGrilla = new Integer[][] {
-	        	 {1, -1, 1, 1},
-	             {-1, 1, -1, 1},
-	             {1, -1, -1, -1}
-	        };
-		 
-//		 	matrizGrilla = g.getMatriz(); ?
-	        calculoTamanoCelda();
-	    }
-	 
-	 private void calculoTamanoCelda() {
-	        if (filas > 0 && columnas > 0) {
-	            int anchura = getWidth() - 40; 
-	            int altura = getHeight() - 60; 
-	            
-	            int celdaAnchuraMax = anchura / columnas;
-	            int celdaAlturaMax = altura / filas;
-	            
-	            tamanoCelda = Math.min(celdaAnchuraMax, celdaAlturaMax);
-	            tamanoCelda = Math.max(tamanoCelda, 20); 
-	            tamanoCelda = Math.min(tamanoCelda, 80); 
-	        }
-	    }
+//	 private void dibujarGrillaDefault() {
+//	        // grilla de ejemplo, asumo q esto después se puede hacer en logica 
+//	        filas = 3;
+//	        columnas = 4;
+//	        matrizGrilla = new Integer[][] {
+//	        	 {1, -1, 1, 1},
+//	             {-1, 1, -1, 1},
+//	             {1, -1, -1, -1}
+//	        };
+//		 
+////		 	matrizGrilla = g.getMatriz(); ?
+//	        calculoTamanoCelda();
+//	    }
 
 
 	    @Override
@@ -84,7 +70,17 @@ public class PanelGrilla extends JPanel {
 	        super.paintComponent(g);
 	        
 	        if (matrizGrilla == null) {
-	        	return;
+	        	Graphics2D g2d = (Graphics2D) g.create();
+	            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+	            g2d.setColor(Color.GRAY);
+	            g2d.setFont(new Font("Arial", Font.ITALIC, 16));
+	            String mensaje = "Cargue una grilla o genere una aleatoria";
+	            FontMetrics fm = g2d.getFontMetrics();
+	            int x = (getWidth() - fm.stringWidth(mensaje)) / 2;
+	            int y = getHeight() / 2;
+	            g2d.drawString(mensaje, x, y);
+	            g2d.dispose();
+	            return;
 	        }
 	        
 	        Graphics2D g2d = (Graphics2D) g.create();
@@ -121,21 +117,27 @@ public class PanelGrilla extends JPanel {
 	                
 	                g2d.setColor(Color.BLACK);
 	                g2d.setFont(new Font("Arial", Font.BOLD, tamanoCelda / 3));
+	                if (matrizGrilla[i][j] != null) {
+	                    g2d.setColor(Color.BLACK);
+	                    g2d.setFont(new Font("Arial", Font.BOLD, tamanoCelda / 3));
+	                    String valor = (matrizGrilla[i][j] == 1) ? "+1" : "-1";
+	                    
+	                    FontMetrics fm = g2d.getFontMetrics();
+	                    int textX = x + (tamanoCelda - fm.stringWidth(valor)) / 2;
+	                    int textY = y + (tamanoCelda + fm.getAscent()) / 2;
+	                    
+	                    g2d.drawString(valor, textX, textY);
+	                }
+	            
+	             //   String valor = (grilla.darElemento(i, j) == 1) ? "+1" : "-1"
 	                
-	             //   String valor = (grilla.darElemento(i, j) == 1) ? "+1" : "-1";
-	                String valor = (matrizGrilla[i][j] == 1) ? "+1" : "-1";
-	                FontMetrics fm = g2d.getFontMetrics();
 	                // FontMetrics: de la libreria de java.awt también, encapsula info 
 	                // de una font particular de la pantalla para usarla después.
 	                // como está dentro de un loop, se usan los métodos .getAscent por ejemplo
 	                // para que no entre en un ciclo recursivo infinito. Info de Oracle x2
 	                
 	                // aaaaunque, se dice que es ineficiente, así que quizá lo cambie
-	                
-	                int textX = x + (tamanoCelda - fm.stringWidth(valor)) / 2;
-	                int textY = y + (tamanoCelda + fm.getAscent()) / 2;
-	                
-	                g2d.drawString(valor, textX, textY);
+	               
 	            }
 	        }
 	    }
@@ -180,12 +182,48 @@ public class PanelGrilla extends JPanel {
 	        }
 	    }
 
-	    public void setGrilla(Integer[][] grilla) {
-	    	this.matrizGrilla = grilla;
-	    	this.filas = grilla.length;
-	    	this.columnas = grilla[0].length;
-	        calculoTamanoCelda();
-	        repaint();
+//	    public void setGrilla(Integer[][] grilla) {
+//	    	this.matrizGrilla = grilla;
+//	    	this.filas = grilla.length;
+//	    	this.columnas = grilla[0].length;
+//	        calculoTamanoCelda();
+//	        repaint();
+//	    }
+	    
+	    public void actualizarGrilla(Grilla grilla) {
+	    	if (grilla != null) {
+	            this.grilla = grilla;
+	            this.matrizGrilla = grilla.getMatriz();
+	            if (this.matrizGrilla != null) {
+	                this.filas = matrizGrilla.length;
+	                this.columnas = matrizGrilla[0].length;
+	                calculoTamanoCelda();
+	                
+	                // para ver namas
+	                System.out.println("Actualizando grilla:");
+	                System.out.println("Filas: " + filas);
+	                System.out.println("Columnas: " + columnas);
+	                System.out.println("Tamaño celda: " + tamanoCelda);
+	                
+	                revalidate(); 
+	                calculoTamanoCelda();
+	                repaint();   
+	            }
+	        }
+	    }
+	    
+	    private void calculoTamanoCelda() {
+	        if (filas > 0 && columnas > 0) {
+	            int anchura = getWidth() - 40; 
+	            int altura = getHeight() - 60; 
+	            
+	            int celdaAnchuraMax = anchura / columnas;
+	            int celdaAlturaMax = altura / filas;
+	            
+	            tamanoCelda = Math.min(celdaAnchuraMax, celdaAlturaMax);
+	            tamanoCelda = Math.max(tamanoCelda, 20); 
+	            tamanoCelda = Math.min(tamanoCelda, 80); 
+	        }
 	    }
 	    
 	    public void setCamino(List<Point> camino) {
