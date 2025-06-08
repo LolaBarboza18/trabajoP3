@@ -31,6 +31,7 @@ public class PanelResultados extends JPanel implements Observer {
     
     private Grilla grilla;
     private CaminoValido caminoOptimo;
+    private boolean mostrarDetalles = false;
     
 
 
@@ -131,6 +132,20 @@ public class PanelResultados extends JPanel implements Observer {
 			caminoOptimo = camino;
 		    caminoOptimo.agregarObserver(this); 
 	}
+	
+	public void setMostrarDetalles(boolean mostrar) {
+        this.mostrarDetalles = mostrar;
+    }
+	
+	public void mostrarUltimaEjecucion() {
+        if (tablaModelo.getRowCount() > 0) {
+            int ultimaFila = tablaModelo.getRowCount() - 1;
+            mostrarDetallesDeFila(ultimaFila);
+            if (mostrarDetalles) {
+                pestañas.setSelectedIndex(1); 
+            }
+        }
+    }
 
 	 private void crearPanelEstadisticas() {
 	        estadisticas = new JPanel(new GridBagLayout());
@@ -197,10 +212,9 @@ public class PanelResultados extends JPanel implements Observer {
 	        mostrarChart.addActionListener(e -> mostrarChart());
 	    }
 	    
-	    private void mostrarDetallesDeFila() {
-	        int filaSeleccionada = resultados.getSelectedRow();
-	        if (filaSeleccionada >= 0) {
-	            int modelRow = resultados.convertRowIndexToModel(filaSeleccionada);
+	    private void mostrarDetallesDeFila(int fila) {
+	        if (fila >= 0 && fila < tablaModelo.getRowCount()) {
+	            int modelRow = resultados.convertRowIndexToModel(fila);
 	            
 	            StringBuilder detallesTexto = new StringBuilder();
 	            detallesTexto.append("DETALLES DE LA EJECUCIÓN\n");
@@ -230,6 +244,13 @@ public class PanelResultados extends JPanel implements Observer {
 	            }
 	            
 	            detalles.setText(detallesTexto.toString());
+	        }
+	    }
+	    
+	    private void mostrarDetallesDeFila() {
+	        int filaSeleccionada = resultados.getSelectedRow();
+	        if (filaSeleccionada >= 0) {
+	            mostrarDetallesDeFila(filaSeleccionada);
 	        }
 	    }
 	    
@@ -265,7 +286,6 @@ public class PanelResultados extends JPanel implements Observer {
 	        };
 	        
 	        tablaModelo.addRow(datosFila);
-//	        actualizarEstadisticas();
 	    }
 	    
 	    public void limpiarResultados() {
@@ -281,32 +301,10 @@ public class PanelResultados extends JPanel implements Observer {
 	        if (contFila == 0) {
 	            mejorTiempo.setText("Mejor tiempo: N/A");
 	            peorTiempo.setText("Peor tiempo: N/A");
-
+	            tiempoPromedio.setText("N/A");
 	            return;
 	        }
-	        
-//	        long tiempoMin = 0;
-//	        long tiempoMax = 0;
-//	        long tiempoTotal = 0;
-	
-	        
-//	        for (int i = 0; i < contFila; i++) {
-//	            Object tiempo = tablaModelo.getValueAt(i, 2); 
-//	            if (tiempo instanceof Long) {
-//	                long time = (Long) tiempo;
-//	                tiempoMin = Math.min(tiempoMin, time);
-//	                tiempoMax = Math.max(tiempoMax, time);
-//	                tiempoTotal += time;
-//	                tiemposValidos++;
-//	            }
-//	        }
-	        
 	       
-//	            mejorTiempo.setText("Mejor tiempo: " + tiempoMin + " ms");
-//	            peorTiempo.setText("Peor tiempo: " + tiempoMax + " ms");
-//	            tiempoPromedio.setText("Tiempo promedio: " + (tiempoTotal / tiemposValidos) + " ms");
-	        
-	        
 	    }
 	    
 	    private void exportarResultados() {
@@ -386,6 +384,10 @@ public class PanelResultados extends JPanel implements Observer {
 		    
 		    agregarResultado(tamanioGrilla, tiempoSinPoda, tiempoConPoda, caminosSinPoda, caminosConPoda);
 		    actualizarPanelEstadisticas(pEjecutadas,tiempoConPoda, tiempoSinPoda);
+		    
+		    if (mostrarDetalles) {
+	            mostrarUltimaEjecucion();
+	        }
 		    
 }
 }

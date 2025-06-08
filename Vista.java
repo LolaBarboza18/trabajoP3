@@ -7,7 +7,7 @@ import java.net.URL;
 public class Vista extends JFrame {
 	
     private JMenuBar menu;
-    private PanelGrilla grilla;
+    private PanelGrilla panelGrilla;
     private PanelControl panelDeControl;
     private PanelResultados panelResultados;
     private PanelEstado panelEstado;
@@ -52,10 +52,9 @@ public class Vista extends JFrame {
         setSize(1200, 800);
         setLocationRelativeTo(null);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		grilla = new PanelGrilla();
-		Integer[][] gr = {{-1, +1}};
-		g = new Grilla(gr);
-		grilla.actualizarGrilla(g);
+		panelGrilla = new PanelGrilla();
+		
+		panelGrilla.actualizarGrilla(g);
 		caminoOptimo = new CaminoValido(g);
 		
         panelDeControl = new PanelControl(g,caminoOptimo);
@@ -78,15 +77,17 @@ public class Vista extends JFrame {
 	
 	 private void conectarPaneles() {
 	        panelDeControl.setPanelEstado(panelEstado);
-	        panelDeControl.setPanelGrilla(grilla);
+	        panelDeControl.setPanelGrilla(panelGrilla);
+	        panelDeControl.setPanelResultados(panelResultados);
 	        
 	        // debug para verificar la conexión inicial
-	        System.out.println("PanelGrilla inicializado: " + (grilla != null));
+	        System.out.println("PanelGrilla inicializado: " + (panelGrilla != null));
 	        System.out.println("PanelControl inicializado: " + (panelDeControl != null));
+	        
 	    }
 
 	 private void pantallaLayout() {
-		 panelIzquierdo.add(grilla, BorderLayout.CENTER);
+		 panelIzquierdo.add(panelGrilla, BorderLayout.CENTER);
 		 panelDerecho.add(panelDeControl, BorderLayout.NORTH);
 		 panelDerecho.add(panelResultados, BorderLayout.CENTER);
 		 panelDerecho.add(panelEstado, BorderLayout.SOUTH);
@@ -150,7 +151,7 @@ public class Vista extends JFrame {
 	                Grilla nuevaGrilla = new Grilla(archivo);
 	                this.g = nuevaGrilla;
 	                this.caminoOptimo = new CaminoValido(nuevaGrilla);
-	                grilla.actualizarGrilla(nuevaGrilla);
+	                panelGrilla.actualizarGrilla(nuevaGrilla);
 	                panelDeControl.actualizarGrilla(nuevaGrilla);
 
 	                panelEstado.setEstatus("Archivo cargado exitosamente: " + archivo);
@@ -194,7 +195,7 @@ public class Vista extends JFrame {
 	    
 	    // getters
 	    public PanelGrilla getPanelGrilla() {
-	        return grilla;
+	        return panelGrilla;
 	    }
 	    
 	    public PanelControl getPanelDeControl() {

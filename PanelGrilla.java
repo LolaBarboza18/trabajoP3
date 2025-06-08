@@ -49,22 +49,6 @@ public class PanelGrilla extends JPanel {
 			}
 		});
 	}
-	
-//	 private void dibujarGrillaDefault() {
-//	        // grilla de ejemplo, asumo q esto después se puede hacer en logica 
-//	        filas = 3;
-//	        columnas = 4;
-//	        matrizGrilla = new Integer[][] {
-//	        	 {1, -1, 1, 1},
-//	             {-1, 1, -1, 1},
-//	             {1, -1, -1, -1}
-//	        };
-//		 
-////		 	matrizGrilla = g.getMatriz(); ?
-//	        calculoTamanoCelda();
-//	    }
-	
-	// YA NO SE USA
 
 	    @Override
 	    protected void paintComponent(Graphics g) {

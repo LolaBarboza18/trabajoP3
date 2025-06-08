@@ -8,19 +8,21 @@ import java.awt.event.ActionListener;
 public class PanelControl extends JPanel implements Observer{
 
 	private JButton ejecutarAlgoritmos;
+	private JSpinner numeroEjecuciones;
+    private JLabel labelEjecuciones;
     private JButton limpiarResultados;
     private JButton cargarGrilla;
     private JButton generarGrillaAleatoria;
     
     private JCheckBox mostrarCamino;
     private JCheckBox resultadosDetalles;
-    private JCheckBox opcionesComparacion;
     
     private JLabel infoGrilla;
     private JLabel caminoValido;
     
     private PanelEstado panelEstado;
     private PanelGrilla panelGrilla;
+    private PanelResultados panelResultados;
     
     private Grilla grilla;
     private CaminoValido caminoOptimo;
@@ -34,6 +36,10 @@ public class PanelControl extends JPanel implements Observer{
 
 	 public void setPanelGrilla(PanelGrilla panel) {
 	        this.panelGrilla = panel;
+	    }
+	 
+	 public void setPanelResultados(PanelResultados panel) {
+	        this.panelResultados = panel;
 	    }
 
 	private void initialize(Grilla g, CaminoValido camino) {
@@ -50,6 +56,11 @@ public class PanelControl extends JPanel implements Observer{
 		ejecutarAlgoritmos = new JButton("Ejecutar Algoritmos");
 		ejecutarAlgoritmos.setPreferredSize(new Dimension(300, 30));
 		ejecutarAlgoritmos.setToolTipText("Ejecuta el algoritmo de fuerza bruta con y sin poda.");
+		
+        labelEjecuciones = new JLabel("Número de ejecuciones:");
+        SpinnerNumberModel spinnerModel = new SpinnerNumberModel(1, 1, 100, 1);
+        numeroEjecuciones = new JSpinner(spinnerModel);
+        numeroEjecuciones.setPreferredSize(new Dimension(40, 25));
 
 		limpiarResultados = new JButton("Limpiar Resultados");
 		limpiarResultados.setPreferredSize(new Dimension(180, 30));
@@ -64,7 +75,6 @@ public class PanelControl extends JPanel implements Observer{
 	        
 		mostrarCamino = new JCheckBox("Mostrar camino encontrado", true);
 		resultadosDetalles = new JCheckBox("Resultados detallados", false);
-		opcionesComparacion = new JCheckBox("Comparar métodos", true);
 
 		infoGrilla = new JLabel();
 		actualizarInfoGrilla();
@@ -72,7 +82,20 @@ public class PanelControl extends JPanel implements Observer{
 	        
 		caminoValido = new JLabel("Estado: Sin ejecutar");
 		caminoValido.setFont(new Font("Arial", Font.ITALIC, 11));
- 
+
+		resultadosDetalles.addActionListener(e -> {
+			if (panelResultados != null) {
+				if (resultadosDetalles.isSelected()) {
+					panelResultados.setMostrarDetalles(true);
+					if (panelResultados.hayResultados()) {
+						panelResultados.mostrarUltimaEjecucion();
+					}
+				} else {
+					panelResultados.setMostrarDetalles(false);
+				}
+			}
+
+		});
 	}
 	
 	public void setPanelEstado(PanelEstado panelEstado) {
@@ -104,14 +127,21 @@ public class PanelControl extends JPanel implements Observer{
         gbc.gridx = 0; gbc.gridy = 2; gbc.gridwidth = 2;
         panelPrincipal.add(new JSeparator(), gbc);
         
+        gbc.gridwidth = 1;
+        gbc.gridx = 0; gbc.gridy = 4;
+        panelPrincipal.add(labelEjecuciones, gbc);
+        gbc.gridx = 1; gbc.gridy = 4;
+        panelPrincipal.add(numeroEjecuciones, gbc);
+        
         gbc.gridwidth = 2;
         gbc.gridx = 0; gbc.gridy = 3;
         panelPrincipal.add(ejecutarAlgoritmos, gbc);
        
-        gbc.gridy = 4;
-        panelPrincipal.add(crearPanelOpciones(), gbc);
-        
+        gbc.gridwidth = 0;
         gbc.gridy = 5;
+        panelPrincipal.add(crearPanelOpciones(), gbc);
+        gbc.gridwidth = 0;
+        gbc.gridy = 6;
         panelPrincipal.add(limpiarResultados, gbc);
         
         // todos los gbc.metodos son reservados de la clase GridBagContraints
@@ -163,11 +193,10 @@ public class PanelControl extends JPanel implements Observer{
     }
     
     private JPanel crearPanelOpciones() {
-        JPanel panelOpciones = new JPanel(new GridLayout(3, 1, 0, 2));
+        JPanel panelOpciones = new JPanel(new GridLayout(2, 1, 0, 2));
         panelOpciones.setBorder(BorderFactory.createTitledBorder("Opciones"));
         panelOpciones.add(mostrarCamino);
         panelOpciones.add(resultadosDetalles);
-        panelOpciones.add(opcionesComparacion);
         return panelOpciones;
     }
     
@@ -176,12 +205,9 @@ public class PanelControl extends JPanel implements Observer{
         
     	ejecutarAlgoritmos.addActionListener(e -> {
             //setBotones(false); 		//ESTO ES PARA QUE SE HABILITE SIEMPRE
+    		int numEjecuciones = (Integer) numeroEjecuciones.getValue();
+    		ejecutarMultiplesVeces(numEjecuciones);
             panelEstado.setEstatus("Ejecutando fuerza bruta...");
-            
-            caminoOptimo.encontrarCaminosSinPoda();
-            caminoOptimo.encontrarCaminosConPoda();
-         
-         
             
         });
         
@@ -195,7 +221,22 @@ public class PanelControl extends JPanel implements Observer{
         generarGrillaAleatoria.addActionListener(e -> crearGrillaAleatoria());
     }
     
-    private void crearGrillaAleatoria() {
+    private void ejecutarMultiplesVeces(int numEjecuciones) {
+    	setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+    	ejecutarAlgoritmos.setEnabled(false);
+
+    	for (int i = 1; i < numEjecuciones; i++) {
+
+    		caminoOptimo.encontrarCaminosSinPoda();
+    		caminoOptimo.encontrarCaminosConPoda();
+    	}
+
+    	ejecutarAlgoritmos.setEnabled(true);
+    	setCursor(Cursor.getDefaultCursor());
+    }
+
+    
+	private void crearGrillaAleatoria() {
     	String filasStr = JOptionPane.showInputDialog(this, 
     			"Ingrese número de filas:", "Nueva Grilla", 
     			JOptionPane.QUESTION_MESSAGE);
@@ -294,12 +335,7 @@ public class PanelControl extends JPanel implements Observer{
     public boolean estaActivadoResultadosDetallados() {
         return resultadosDetalles.isSelected();
     }
-    
-    public boolean estaActivadoCompararMetodos() {
-    	 return opcionesComparacion.isSelected();
-    }
-
-	
+ 
 
     
 }
