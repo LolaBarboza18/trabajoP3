@@ -2,6 +2,7 @@ package tp3_p3;
 
 import javax.swing.*;
 import java.awt.*;
+import java.net.URL;
 
 public class Vista extends JFrame {
 	
@@ -52,12 +53,9 @@ public class Vista extends JFrame {
         setLocationRelativeTo(null);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		grilla = new PanelGrilla();
-		Integer[][] gr = {
-	            {1, -1, 1, -1},
-	            {-1, 1, -1, -1},
-	            {1, -1, -1, 1}
-	        };
+		Integer[][] gr = {{-1, +1}};
 		g = new Grilla(gr);
+		grilla.actualizarGrilla(g);
 		caminoOptimo = new CaminoValido(g);
 		
         panelDeControl = new PanelControl(g,caminoOptimo);
@@ -66,17 +64,25 @@ public class Vista extends JFrame {
         principal = new JPanel(new BorderLayout());
         panelIzquierdo = new JPanel(new BorderLayout());
         panelDerecho = new JPanel(new BorderLayout());
-//        quería ver si podiamos cambiarle el icono :]
-//        try {
-//            setIconImage(Toolkit.getDefaultToolkit().getImage("resources/robot.png"));
-//        } catch (Exception e) {
-//         
-//        }
+        try {
+            URL iconURL = getClass().getResource("/robotSimpatico.png");
+            if (iconURL != null) {
+                ImageIcon img = new ImageIcon(iconURL);
+                setIconImage(img.getImage());
+            }
+        } catch (Exception e) {
+            System.err.println("Error cargando el ícono: " + e.getMessage());
+        }
     
 	}
 	
 	 private void conectarPaneles() {
 	        panelDeControl.setPanelEstado(panelEstado);
+	        panelDeControl.setPanelGrilla(grilla);
+	        
+	        // debug para verificar la conexión inicial
+	        System.out.println("PanelGrilla inicializado: " + (grilla != null));
+	        System.out.println("PanelControl inicializado: " + (panelDeControl != null));
 	    }
 
 	 private void pantallaLayout() {
@@ -103,17 +109,12 @@ public class Vista extends JFrame {
 	        JMenuItem cargarGrilla = new JMenuItem("Cargar Grilla...");
 	        cargarGrilla.setMnemonic('C');
 	        cargarGrilla.addActionListener(e -> cargarGrillaDeArchivo());
-	        
-//	        JMenuItem generarGrilla = new JMenuItem("Generar Grilla Aleatoria...");
-//	        generarGrilla.setMnemonic('G');
-//	        generarGrilla.addActionListener(e -> grillaRandom());
-	        
+
 	        JMenuItem guardarResultado = new JMenuItem("Guardar Resultados...");
 	        guardarResultado.setMnemonic('R');
 	        guardarResultado.addActionListener(e -> guardarResultados());
 	        
 	        menuArchivo.add(cargarGrilla);
-//	        menuArchivo.add(generarGrilla);
 	        menuArchivo.addSeparator();
 	        menuArchivo.add(guardarResultado);
 	        menuArchivo.addSeparator();
@@ -145,17 +146,26 @@ public class Vista extends JFrame {
 	        
 	        if (seleccionaArchivo.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
 	            String archivo = seleccionaArchivo.getSelectedFile().getAbsolutePath();
-	            panelEstado.setEstatus("Cargando archivo: " + archivo);
+	            try {
+	                Grilla nuevaGrilla = new Grilla(archivo);
+	                this.g = nuevaGrilla;
+	                this.caminoOptimo = new CaminoValido(nuevaGrilla);
+	                grilla.actualizarGrilla(nuevaGrilla);
+	                panelDeControl.actualizarGrilla(nuevaGrilla);
+
+	                panelEstado.setEstatus("Archivo cargado exitosamente: " + archivo);
+	                
+	                // para ver
+	                System.out.println("Grilla cargada desde archivo:");
+	                System.out.println("Dimensiones: " + nuevaGrilla.getMatriz().length + "x" + nuevaGrilla.getMatriz()[0].length);
+	                
+	            } catch (Exception e) {
+	                String mensaje = "Error al cargar el archivo: " + e.getMessage();
+	                System.err.println(mensaje);
+	                JOptionPane.showMessageDialog(this, mensaje, "Error", JOptionPane.ERROR_MESSAGE);
+	            }
 	        }
 	    }
-	    
-//	    private void mostrarGrillaRandom() {
-//	        GrillaRandom grillaAleatoria = new GrillaRandom(this);
-//	        grillaAleatoria.setVisible(true);
-//	    }
-	    
-	    // esto si uso una clase para grillaRandom.......
-	    
 	    
 	    private void guardarResultados() {
 	        JFileChooser archivoEscoge = new JFileChooser();

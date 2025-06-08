@@ -7,10 +7,10 @@ import java.awt.event.ActionListener;
 
 public class PanelControl extends JPanel implements Observer{
 
-	private JButton ejecutarAlgoritmos; //ex "ejecutarFuerzaBruta"
-//    private JButton ejecutarConPoda;
+	private JButton ejecutarAlgoritmos;
     private JButton limpiarResultados;
     private JButton cargarGrilla;
+    private JButton generarGrillaAleatoria;
     
     private JCheckBox mostrarCamino;
     private JCheckBox resultadosDetalles;
@@ -20,6 +20,7 @@ public class PanelControl extends JPanel implements Observer{
     private JLabel caminoValido;
     
     private PanelEstado panelEstado;
+    private PanelGrilla panelGrilla;
     
     private Grilla grilla;
     private CaminoValido caminoOptimo;
@@ -31,6 +32,9 @@ public class PanelControl extends JPanel implements Observer{
         setupEventHandlers();
 	}
 
+	 public void setPanelGrilla(PanelGrilla panel) {
+	        this.panelGrilla = panel;
+	    }
 
 	private void initialize(Grilla g, CaminoValido camino) {
 		setBorder(BorderFactory.createTitledBorder(
@@ -44,18 +48,16 @@ public class PanelControl extends JPanel implements Observer{
 	    caminoOptimo.agregarObserver(this);
 
 		ejecutarAlgoritmos = new JButton("Ejecutar Algoritmos");
-		ejecutarAlgoritmos.setPreferredSize(new Dimension(180, 30));
+		ejecutarAlgoritmos.setPreferredSize(new Dimension(300, 30));
 		ejecutarAlgoritmos.setToolTipText("Ejecuta el algoritmo de fuerza bruta sin poda");
-	        
-//		ejecutarConPoda = new JButton("Ejecutar con Poda");
-//		ejecutarConPoda.setPreferredSize(new Dimension(180, 30));
-//		ejecutarConPoda.setToolTipText("Ejecuta el algoritmo con estrategias de poda");
 
 		limpiarResultados = new JButton("Limpiar Resultados");
 		limpiarResultados.setPreferredSize(new Dimension(180, 30));
 
 		cargarGrilla = new JButton("Cargar Archivo");
 		cargarGrilla.setPreferredSize(new Dimension(120, 25));
+		generarGrillaAleatoria = new JButton("Nueva Grilla Aleatoria");
+		generarGrillaAleatoria.setPreferredSize(new Dimension(120, 25));
 	        
 		mostrarCamino = new JCheckBox("Mostrar camino encontrado", true);
 		resultadosDetalles = new JCheckBox("Resultados detallados", false);
@@ -91,6 +93,9 @@ public class PanelControl extends JPanel implements Observer{
         gbc.gridwidth = 1;
         gbc.gridx = 0; gbc.gridy = 1;
         panelPrincipal.add(cargarGrilla, gbc);
+        gbc.gridwidth = 1;
+        gbc.gridx = 1; gbc.gridy = 1;
+        panelPrincipal.add(generarGrillaAleatoria, gbc);
 
 
         gbc.gridx = 0; gbc.gridy = 2; gbc.gridwidth = 2;
@@ -99,14 +104,11 @@ public class PanelControl extends JPanel implements Observer{
         gbc.gridwidth = 2;
         gbc.gridx = 0; gbc.gridy = 3;
         panelPrincipal.add(ejecutarAlgoritmos, gbc);
-        
-//        gbc.gridy = 4;
-//        panelPrincipal.add(ejecutarConPoda, gbc);
-        
-        gbc.gridy = 5;
+       
+        gbc.gridy = 4;
         panelPrincipal.add(crearPanelOpciones(), gbc);
         
-        gbc.gridy = 6;
+        gbc.gridy = 5;
         panelPrincipal.add(limpiarResultados, gbc);
         
         // todos los gbc.metodos son reservados de la clase GridBagContraints
@@ -124,18 +126,39 @@ public class PanelControl extends JPanel implements Observer{
         cargarGrilla.addActionListener(e -> cargarGrillaDeArchivo());
         return infoPanel;
     }
-    //--
+    
     private void cargarGrillaDeArchivo() {
         JFileChooser seleccionaArchivo = new JFileChooser();
         seleccionaArchivo.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(
             "Archivos de texto (*.txt)", "txt"));
-        
+       
         if (seleccionaArchivo.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             String archivo = seleccionaArchivo.getSelectedFile().getAbsolutePath();
             panelEstado.setEstatus("Cargando archivo: " + archivo);
+            
+            try {
+                Grilla nuevaGrilla = new Grilla(archivo);
+                this.grilla = nuevaGrilla;
+                
+                if (panelGrilla != null) {
+                    panelGrilla.actualizarGrilla(nuevaGrilla);
+                }
+                
+                // visualizacion debug
+                System.out.println("Grilla cargada correctamente:");
+                System.out.println("Dimensiones: " + nuevaGrilla.getMatriz().length + "x" + nuevaGrilla.getMatriz()[0].length);
+                
+                actualizarInfoGrilla();
+                panelEstado.setEstatus("Archivo cargado exitosamente: " + archivo);
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this,
+                    "Error al cargar el archivo: " + e.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
-    //--
+    
     private JPanel crearPanelOpciones() {
         JPanel panelOpciones = new JPanel(new GridLayout(3, 1, 0, 2));
         panelOpciones.setBorder(BorderFactory.createTitledBorder("Opciones"));
@@ -146,8 +169,7 @@ public class PanelControl extends JPanel implements Observer{
     }
     
     private void setupEventHandlers() {
-        // los event handlers se conectan con la lógica de negocio
-        // por ahora dejo todo vacio :9
+        // pendiente
         
     	ejecutarAlgoritmos.addActionListener(e -> {
             //setBotones(false); 		//ESTO ES PARA QUE SE HABILITE SIEMPRE
@@ -160,26 +182,50 @@ public class PanelControl extends JPanel implements Observer{
             
         });
         
-//        ejecutarConPoda.addActionListener(e -> {
-//            setBotones(false);
-//            panelEstado.setEstatus("Ejecutando con poda...");
-//          
-//                caminoOptimo.encontrarCaminosConPoda();
-//                
-//        });
-        
         limpiarResultados.addActionListener(e -> {
-            //limpiar resultados
             caminoValido.setText("Estado: Sin ejecutar");
             if (panelEstado != null) {
                 panelEstado.setEstatus("Resultados limpiados");
             }
         });
+        
+        cargarGrilla.addActionListener(e -> cargarGrillaDeArchivo());
+        generarGrillaAleatoria.addActionListener(e -> crearGrillaAleatoria());
     }
     
-    public void setBotones(boolean enabled) {
+    private void crearGrillaAleatoria() {
+    	String filasStr = JOptionPane.showInputDialog(this, 
+    			"Ingrese número de filas:", "Nueva Grilla", 
+    			JOptionPane.QUESTION_MESSAGE);
+    	String colsStr = JOptionPane.showInputDialog(this, 
+    			"Ingrese número de columnas:", "Nueva Grilla", 
+    			JOptionPane.QUESTION_MESSAGE);
+
+    	try {
+    		int filas = Integer.parseInt(filasStr);
+    		int cols = Integer.parseInt(colsStr);
+
+    		if (filas > 0 && cols > 0) {
+    			Grilla nuevaGrilla = new Grilla(filas, cols);
+
+    			this.grilla = nuevaGrilla;
+    			if (panelGrilla != null) {
+    				panelGrilla.actualizarGrilla(nuevaGrilla);
+    			}
+
+    			actualizarInfoGrilla();
+    			panelEstado.setEstatus("Nueva grilla aleatoria creada");
+    		}
+    	} catch (NumberFormatException e) {
+    		JOptionPane.showMessageDialog(this,
+    				"Por favor ingrese números válidos",
+    				"Error",
+    				JOptionPane.ERROR_MESSAGE);
+    	}
+    }
+
+	public void setBotones(boolean enabled) {
         ejecutarAlgoritmos.setEnabled(enabled);
-//        ejecutarConPoda.setEnabled(enabled);
         cargarGrilla.setEnabled(enabled);
  
     }
@@ -199,7 +245,6 @@ public class PanelControl extends JPanel implements Observer{
     
 	@Override
 	public void actualizar(CaminoValido cv) {
-		
 		if (cv.getCaminosEncontrados()>0) {
 		caminoValido.setText("Estado: Camino válido encontrado");
     	caminoValido.setForeground(new Color(0, 120, 0));
@@ -209,7 +254,13 @@ public class PanelControl extends JPanel implements Observer{
 		}
 		
 	}
-    
+	
+	public void actualizarGrilla(Grilla nuevaGrilla) {
+		 this.grilla = nuevaGrilla;
+		 actualizarInfoGrilla();
+		
+	}
+
     //getters 
     public boolean estaActivadoMostrarCamino() {
         return mostrarCamino.isSelected();
@@ -223,6 +274,7 @@ public class PanelControl extends JPanel implements Observer{
     	 return opcionesComparacion.isSelected();
     }
 
+	
 
     
 }

@@ -63,7 +63,8 @@ public class PanelGrilla extends JPanel {
 ////		 	matrizGrilla = g.getMatriz(); ?
 //	        calculoTamanoCelda();
 //	    }
-
+	
+	// YA NO SE USA
 
 	    @Override
 	    protected void paintComponent(Graphics g) {
@@ -129,7 +130,6 @@ public class PanelGrilla extends JPanel {
 	                    g2d.drawString(valor, textX, textY);
 	                }
 	            
-	             //   String valor = (grilla.darElemento(i, j) == 1) ? "+1" : "-1"
 	                
 	                // FontMetrics: de la libreria de java.awt también, encapsula info 
 	                // de una font particular de la pantalla para usarla después.
@@ -182,14 +182,6 @@ public class PanelGrilla extends JPanel {
 	        }
 	    }
 
-//	    public void setGrilla(Integer[][] grilla) {
-//	    	this.matrizGrilla = grilla;
-//	    	this.filas = grilla.length;
-//	    	this.columnas = grilla[0].length;
-//	        calculoTamanoCelda();
-//	        repaint();
-//	    }
-	    
 	    public void actualizarGrilla(Grilla grilla) {
 	    	if (grilla != null) {
 	            this.grilla = grilla;
@@ -197,17 +189,23 @@ public class PanelGrilla extends JPanel {
 	            if (this.matrizGrilla != null) {
 	                this.filas = matrizGrilla.length;
 	                this.columnas = matrizGrilla[0].length;
-	                calculoTamanoCelda();
 	                
-	                // para ver namas
+	                // visualizacion debug
 	                System.out.println("Actualizando grilla:");
 	                System.out.println("Filas: " + filas);
 	                System.out.println("Columnas: " + columnas);
 	                System.out.println("Tamaño celda: " + tamanoCelda);
+	                for (int i = 0; i < filas; i++) {
+	                    for (int j = 0; j < columnas; j++) {
+	                        System.out.print(matrizGrilla[i][j] + " ");
+	                    }
+	                    System.out.println();
+	                }
 	                
-	                revalidate(); 
 	                calculoTamanoCelda();
-	                repaint();   
+	                invalidate();
+	                revalidate();
+	                repaint();
 	            }
 	        }
 	    }
@@ -262,7 +260,6 @@ public class PanelGrilla extends JPanel {
 	    public String getInfoCelda(int f, int c) {
 	        if (f >= 0 && f < filas && c >= 0 && c < columnas) {
 	            return String.format("Posición (%d,%d): Carga %s", 
-//	                f, c, (grilla.darElemento(f, c) == 1) ? "+1" : "-1");
 	            		f, c, (matrizGrilla[f][c] == 1) ? "+1" : "-1");
 
 	        }

@@ -64,6 +64,15 @@ public class Grilla {
 	        while ((linea = reader.readLine()) != null) {
 	            if (linea.trim().isEmpty()) continue;
 
+	            linea = linea.trim()
+                        .replace("{", "")
+                        .replace("}", "")
+                        .replace(" ", "");
+
+	            if (linea.endsWith(",")) {
+	            	linea = linea.substring(0, linea.length() - 1);
+	            }
+	            
 	            String[] valores = linea.split(",");
 	            Integer[] fila = new Integer[valores.length];
 
@@ -71,6 +80,17 @@ public class Grilla {
 	                fila[i] = Integer.parseInt(valores[i].trim());
 	            }
 	            filas.add(fila);
+	        }
+	        
+	        if (filas.isEmpty()) {
+	            throw new IllegalArgumentException("El archivo no contiene datos válidos");
+	        }
+
+	        int numeroColumnas = filas.get(0).length;
+	        for (int i = 1; i < filas.size(); i++) {
+	            if (filas.get(i).length != numeroColumnas) {
+	                throw new IllegalArgumentException("Todas las filas deben tener el mismo número de columnas");
+	            }
 	        }
 
 	        // Cargar dimensiones
@@ -82,13 +102,15 @@ public class Grilla {
 	        for (int i = 0; i < n; i++) {
 	            this.matriz[i] = filas.get(i);
 	        }
+	        
+	        
 
 
 	    } catch (IOException e) {
 	        System.err.println("Error al leer el archivo: " + e.getMessage());
 	    } catch (NumberFormatException e) {
 	        System.err.println("Formato incorrecto en el archivo: " + e.getMessage());
-	    }
+	    } 
 	}
 
 }
