@@ -225,7 +225,7 @@ public class PanelControl extends JPanel implements Observer{
     	setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
     	ejecutarAlgoritmos.setEnabled(false);
 
-    	for (int i = 1; i < numEjecuciones; i++) {
+    	for (int i = 0; i < numEjecuciones; i++) {
 
     		caminoOptimo.encontrarCaminosSinPoda();
     		caminoOptimo.encontrarCaminosConPoda();
