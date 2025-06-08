@@ -108,8 +108,8 @@ public class Vista extends JFrame {
 	        
 	        JMenuItem cargarGrilla = new JMenuItem("Cargar Grilla...");
 	        cargarGrilla.setMnemonic('C');
-	        cargarGrilla.addActionListener(e -> cargarGrillaDeArchivo());
-
+	        cargarGrilla.addActionListener(e -> panelDeControl.cargarGrillaDeArchivo());
+	        
 	        JMenuItem guardarResultado = new JMenuItem("Guardar Resultados...");
 	        guardarResultado.setMnemonic('R');
 	        guardarResultado.addActionListener(e -> guardarResultados());

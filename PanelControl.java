@@ -49,15 +49,18 @@ public class PanelControl extends JPanel implements Observer{
 
 		ejecutarAlgoritmos = new JButton("Ejecutar Algoritmos");
 		ejecutarAlgoritmos.setPreferredSize(new Dimension(300, 30));
-		ejecutarAlgoritmos.setToolTipText("Ejecuta el algoritmo de fuerza bruta sin poda");
+		ejecutarAlgoritmos.setToolTipText("Ejecuta el algoritmo de fuerza bruta con y sin poda.");
 
 		limpiarResultados = new JButton("Limpiar Resultados");
 		limpiarResultados.setPreferredSize(new Dimension(180, 30));
+		limpiarResultados.setToolTipText("Limpia el camino encontrado.");
 
 		cargarGrilla = new JButton("Cargar Archivo");
 		cargarGrilla.setPreferredSize(new Dimension(120, 25));
+		cargarGrilla.setToolTipText("Cargar archivo .txt con grilla existente.");
 		generarGrillaAleatoria = new JButton("Nueva Grilla Aleatoria");
 		generarGrillaAleatoria.setPreferredSize(new Dimension(120, 25));
+		generarGrillaAleatoria.setToolTipText("Generar una nueva grilla con dimensiones especificadas.");
 	        
 		mostrarCamino = new JCheckBox("Mostrar camino encontrado", true);
 		resultadosDetalles = new JCheckBox("Resultados detallados", false);
@@ -72,7 +75,7 @@ public class PanelControl extends JPanel implements Observer{
  
 	}
 	
-	 public void setPanelEstado(PanelEstado panelEstado) {
+	public void setPanelEstado(PanelEstado panelEstado) {
 	        this.panelEstado = panelEstado;
 	    }
 	 
@@ -127,7 +130,7 @@ public class PanelControl extends JPanel implements Observer{
         return infoPanel;
     }
     
-    private void cargarGrillaDeArchivo() {
+    public void cargarGrillaDeArchivo() {
         JFileChooser seleccionaArchivo = new JFileChooser();
         seleccionaArchivo.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(
             "Archivos de texto (*.txt)", "txt"));
@@ -189,7 +192,6 @@ public class PanelControl extends JPanel implements Observer{
             }
         });
         
-        cargarGrilla.addActionListener(e -> cargarGrillaDeArchivo());
         generarGrillaAleatoria.addActionListener(e -> crearGrillaAleatoria());
     }
     
@@ -197,31 +199,54 @@ public class PanelControl extends JPanel implements Observer{
     	String filasStr = JOptionPane.showInputDialog(this, 
     			"Ingrese número de filas:", "Nueva Grilla", 
     			JOptionPane.QUESTION_MESSAGE);
-    	String colsStr = JOptionPane.showInputDialog(this, 
-    			"Ingrese número de columnas:", "Nueva Grilla", 
-    			JOptionPane.QUESTION_MESSAGE);
-
-    	try {
-    		int filas = Integer.parseInt(filasStr);
-    		int cols = Integer.parseInt(colsStr);
-
-    		if (filas > 0 && cols > 0) {
-    			Grilla nuevaGrilla = new Grilla(filas, cols);
-
-    			this.grilla = nuevaGrilla;
-    			if (panelGrilla != null) {
-    				panelGrilla.actualizarGrilla(nuevaGrilla);
-    			}
-
-    			actualizarInfoGrilla();
-    			panelEstado.setEstatus("Nueva grilla aleatoria creada");
-    		}
-    	} catch (NumberFormatException e) {
-    		JOptionPane.showMessageDialog(this,
-    				"Por favor ingrese números válidos",
-    				"Error",
-    				JOptionPane.ERROR_MESSAGE);
+    	if (filasStr == null) {
+    		return;
     	}
+    	try {
+            int filas = Integer.parseInt(filasStr);
+            if (filas <= 0) {
+                JOptionPane.showMessageDialog(this,
+                    "El número de filas debe ser mayor a 0",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            
+            String colsStr = JOptionPane.showInputDialog(this, 
+                    "Ingrese número de columnas:", "Nueva Grilla", 
+                    JOptionPane.QUESTION_MESSAGE);
+            
+            if (colsStr == null) {
+                return;
+            }
+            
+            int cols = Integer.parseInt(colsStr);
+            if (cols <= 0) {
+                JOptionPane.showMessageDialog(this,
+                    "El número de columnas debe ser mayor a 0",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            
+            Grilla nuevaGrilla = new Grilla(filas, cols);
+            this.grilla = nuevaGrilla;
+            
+            if (panelGrilla != null) {
+                panelGrilla.actualizarGrilla(nuevaGrilla);
+            }
+            
+            actualizarInfoGrilla();
+            if (panelEstado != null) {
+                panelEstado.setEstatus("Nueva grilla aleatoria creada");
+            }
+
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this,
+                "Por favor ingrese números válidos",
+                "Error",
+                JOptionPane.ERROR_MESSAGE);
+        }
     }
 
 	public void setBotones(boolean enabled) {
