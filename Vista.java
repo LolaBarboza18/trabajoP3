@@ -78,9 +78,7 @@ public class Vista extends JFrame {
 	        panelDeControl.setPanelGrilla(grilla);
 	        panelDeControl.setPanelResultados(panelResultados);
 	        
-	        // debug para verificar la conexión inicial
-	        System.out.println("PanelGrilla inicializado: " + (grilla != null));
-	        System.out.println("PanelControl inicializado: " + (panelDeControl != null));
+
 	        
 	    }
 
@@ -151,7 +149,9 @@ public class Vista extends JFrame {
 	    
 	    private void mostrarFuncionamiento() {
 	        JOptionPane.showMessageDialog(this,
-	            "explicacion blablabla",
+	            "Querido usuario: \n Si quieres crear una grilla aleatoria, haz click en 'Nueva grilla aleatoria "
+	            + "y completa los datos.\n Si quieres cargar una grilla, puedes encontrar una de ejemlo en la carpeta de este proyecto. \n"
+	            + "Si quieres volver a correr el programa solo selecciona como quieres generar la grilla nuevamente.",
 	            "Como funciona",
 	            JOptionPane.INFORMATION_MESSAGE);
 	    }

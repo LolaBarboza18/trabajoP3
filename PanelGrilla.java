@@ -24,7 +24,6 @@ public class PanelGrilla extends JPanel implements Observer {
 	private Graphics2D g2d;
 
 	private int tamanoCelda = 40;
-//	private boolean mostrarCamino = false;
 	private GrillaSolucion solucion;
 
 	/**
@@ -77,9 +76,6 @@ public class PanelGrilla extends JPanel implements Observer {
 	        }
 	        
 	        g2d = (Graphics2D) g.create();
-	        // Graphics2D: clase de Java que extiende de Graphics
-	        // para dibujar figuras en pantalla con más precisión geometrica. Dibuja sobre un objeto Component.
-	        // Es de la libreria de java.awt. Info de Oracle. :9
 	        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 	        
 	        int comienzoX = (getWidth() - columnas * tamanoCelda) / 2;
@@ -101,15 +97,6 @@ public class PanelGrilla extends JPanel implements Observer {
 	                int y = stY + i * tamanoCelda;
 	                
 	                pintarCelda(g2d, i, j, x, y, Color.WHITE);
-	            
-	                
-	                // FontMetrics: de la libreria de java.awt también, encapsula info 
-	                // de una font particular de la pantalla para usarla después.
-	                // como está dentro de un loop, se usan los métodos .getAscent por ejemplo
-	                // para que no entre en un ciclo recursivo infinito. Info de Oracle x2
-	                
-	                // aaaaunque, se dice que es ineficiente, así que quizá lo cambie
-	               
 	            }
 	        }
 	    }
@@ -221,8 +208,7 @@ public class PanelGrilla extends JPanel implements Observer {
 	    }
 	    
 	    public void limpiarCamino() {
-	        this.camino = null;
-//	        this.mostrarCamino = false;
+	        this.solucion = null;
 	        repaint();
 	    }
 

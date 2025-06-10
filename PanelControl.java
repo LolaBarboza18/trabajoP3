@@ -206,13 +206,25 @@ public class PanelControl extends JPanel implements Observer{
     }
     
     private void ejecutarAlgoritmos() {
+    	 if (grilla == null) {
+    	        JOptionPane.showMessageDialog(this,
+    	            "Debe cargar una grilla antes de ejecutar los algoritmos",
+    	            "Error",
+    	            JOptionPane.ERROR_MESSAGE);
+    	        return;
+    	    }
+    	 
     	setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
     	ejecutarAlgoritmos.setEnabled(false);
 
     	try {
     		caminoOptimo.ejecutarAmbos();
-    	}catch (IllegalArgumentException ex) {
-    		JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+    	}catch (Exception ex) {
+    		JOptionPane.showMessageDialog(this,
+    	            "Error al ejecutar los algoritmos: " + ex.getMessage(),
+    	            "Error",
+    	            JOptionPane.ERROR_MESSAGE);
+    	        panelEstado.setEstatus("Error: " + ex.getMessage());
     	}
     
     	ejecutarAlgoritmos.setEnabled(true);
@@ -227,15 +239,8 @@ public class PanelControl extends JPanel implements Observer{
     	if (filasStr == null) {
     		return;
     	}
-    	try {
             int filas = Integer.parseInt(filasStr);
-            if (filas <= 0) {
-                JOptionPane.showMessageDialog(this,
-                    "El número de filas debe ser mayor a 0",
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE);
-                return;
-            }
+
             
             String colsStr = JOptionPane.showInputDialog(this, 
                     "Ingrese número de columnas:", "Nueva Grilla", 
@@ -244,16 +249,10 @@ public class PanelControl extends JPanel implements Observer{
             if (colsStr == null) {
                 return;
             }
-            
+           
             int cols = Integer.parseInt(colsStr);
-            if (cols <= 0) {
-                JOptionPane.showMessageDialog(this,
-                    "El número de columnas debe ser mayor a 0",
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE);
-                return;
-            }
             
+            try {
             Grilla nuevaGrilla = new Grilla(filas, cols);
             this.grilla = nuevaGrilla;
             this.caminoOptimo = new CaminoValido(nuevaGrilla);
@@ -275,11 +274,9 @@ public class PanelControl extends JPanel implements Observer{
                 panelEstado.setEstatus("Nueva grilla aleatoria creada");
             }
 
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this,
-                "Por favor ingrese números válidos",
-                "Error",
-                JOptionPane.ERROR_MESSAGE);
+        } catch (IllegalArgumentException e) {
+        	JOptionPane.showMessageDialog(this, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+
         }
     }
 

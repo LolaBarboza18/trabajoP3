@@ -272,8 +272,8 @@ public class PanelResultados extends JPanel implements Observer {
 	    public void agregarResultado(String tamanoGrilla, long tiempoSinPoda, long tiempoConPoda, int caminosEncontrados , int LlamadasRecursivas, int LlamadasRecursivasConPoda) {
 
 	        double mejora = 0;
-	        if (tiempoSinPoda > 0) {
-	        	mejora = ((double)(tiempoSinPoda - tiempoConPoda) / tiempoSinPoda) * 100;
+	        if (LlamadasRecursivas > 0) {
+	        	mejora = ((double)(LlamadasRecursivas - LlamadasRecursivasConPoda) / LlamadasRecursivas) * 100;
 	        }
 	        
 	        Object[] datosFila = {

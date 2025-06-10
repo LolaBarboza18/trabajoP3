@@ -17,7 +17,6 @@ public class PanelEstado extends JPanel {
 	public PanelEstado() {
 		initialize();
 		panelLayout();
-//		empezarTimer();
 	}
 
 	/**
