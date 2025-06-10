@@ -11,11 +11,14 @@ import logica.Grilla;
 import logica.GrillaSolucion;
 import logica.Observer;
 
-import java.util.List;
-
 public class PanelGrilla extends JPanel implements Observer {
 
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	
 	private CaminoValido camino;
 	private Integer[][] matrizGrilla;
 	private int filas;
@@ -25,6 +28,8 @@ public class PanelGrilla extends JPanel implements Observer {
 
 	private int tamanoCelda = 40;
 	private GrillaSolucion solucion;
+	
+	private boolean mostrarCaminoActivo = true;
 
 	/**
 	 * Create the application.
@@ -91,6 +96,9 @@ public class PanelGrilla extends JPanel implements Observer {
 	    }
 	    
 	    private void dibujarGrilla(Graphics2D g2d, int stX, int stY) {
+	    	
+	    	g2d.setStroke(new BasicStroke(1.0f));
+	    	
 	        for (int i = 0; i < filas; i++) {
 	            for (int j = 0; j < columnas; j++) {
 	                int x = stX + j * tamanoCelda;
@@ -102,6 +110,8 @@ public class PanelGrilla extends JPanel implements Observer {
 	    }
 
 		private void pintarCelda(Graphics2D g2d, int i, int j, int x, int y, Color color) {
+			g2d.setStroke(new BasicStroke(1.0f));
+			
 			g2d.setColor(color);
 			g2d.fillRect(x, y, tamanoCelda, tamanoCelda);
 			
@@ -171,13 +181,15 @@ public class PanelGrilla extends JPanel implements Observer {
 	    
 	    
 	    public void actualizar() {
-	    	solucion = camino.darSolucion();
-	    	repaint();
+	    	if(camino != null) {
+	    		solucion = camino.darSolucion();
+		    	repaint();
+	    	}
 	    }
 
 		private void dibujarSolucion() {
 			
-			if (solucion == null) {
+			if (solucion == null || !mostrarCaminoActivo) {
 				return;
 			}else{
 				
@@ -200,11 +212,8 @@ public class PanelGrilla extends JPanel implements Observer {
 	    }
 		} 
 	    
-	    
-	    
 	    public void setCamino(CaminoValido cv) {
 	        this.camino = cv;
-
 	    }
 	    
 	    public void limpiarCamino() {
@@ -227,6 +236,11 @@ public class PanelGrilla extends JPanel implements Observer {
 	    
 	    public Dimension getTamanoGrilla() {
 	        return new Dimension(columnas, filas);
+	    }
+	    
+	    public void setMostrarCamino(boolean mostrar) {
+	    	this.mostrarCaminoActivo = mostrar;
+	        repaint();
 	    }
 	    
 	    public String getInfoCelda(int f, int c) {

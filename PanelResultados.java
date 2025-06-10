@@ -13,8 +13,27 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartPanel;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.CategoryPlot;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.renderer.category.BarRenderer;
+import org.jfree.data.category.DefaultCategoryDataset;
+
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import javax.swing.filechooser.FileNameExtensionFilter;
+
 public class PanelResultados extends JPanel implements Observer {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	
 	private JTable resultados;
     private DefaultTableModel tablaModelo;
     private JScrollPane tablaScroll;
@@ -79,7 +98,12 @@ public class PanelResultados extends JPanel implements Observer {
 	        };
 	        
 	        tablaModelo = new DefaultTableModel(nombresCols, 0) {
-	            @Override
+	            /**
+				 * 
+				 */
+				private static final long serialVersionUID = 1L;
+
+				@Override
 	            public boolean isCellEditable(int f, int c) {
 	                return false; 
 	            }
@@ -216,7 +240,23 @@ public class PanelResultados extends JPanel implements Observer {
 	        
 	        limpiarTabla.addActionListener(e -> limpiarResultados());
 	        exportaResultados.addActionListener(e -> exportarResultados());
-	        mostrarChart.addActionListener(e -> mostrarChart());
+	        mostrarChart.addActionListener(e -> {
+	        	    String[] opciones = {"Gráfico de Barras", "Gráfico de Líneas"};
+	        	    int seleccion = JOptionPane.showOptionDialog(this,
+	        	        "Seleccione el tipo de gráfico a mostrar",
+	        	        "Tipo de Gráfico",
+	        	        JOptionPane.DEFAULT_OPTION,
+	        	        JOptionPane.QUESTION_MESSAGE,
+	        	        null,
+	        	        opciones,
+	        	        opciones[0]);
+
+	        	    if (seleccion == 0) {
+	        	        mostrarChart();
+	        	    } else if (seleccion == 1) {
+	        	        mostrarChartLineas();
+	        	    }
+	        });
 	    }
 	    
 	    private void mostrarDetallesDeFila(int fila) {
@@ -231,10 +271,8 @@ public class PanelResultados extends JPanel implements Observer {
 	            Long tiempoSinPoda = (Long) tablaModelo.getValueAt(modelRow, 1);
 	            Long tiempoConPoda = (Long) tablaModelo.getValueAt(modelRow, 2);
 
-	            Integer LlamadasRecursivasPoda = (Integer) tablaModelo.getValueAt(modelRow, 3);
+	            Integer LlamadasRecursivasPoda = (Integer) tablaModelo.getValueAt(modelRow, 5);
 	            Integer LlamadasRecursivas = (Integer) tablaModelo.getValueAt(modelRow, 4);
-	            Integer caminosEncontrados = (Integer) tablaModelo.getValueAt(modelRow, 5);
-
 	            Integer caminosRecursivos = (Integer) tablaModelo.getValueAt(modelRow, 3);
 
 
@@ -243,9 +281,9 @@ public class PanelResultados extends JPanel implements Observer {
 	            detallesTexto.append(String.format("Tamaño de grilla: %s\n", tamanoGrilla));
 	            detallesTexto.append(String.format("Tiempo sin poda: %d ms\n", tiempoSinPoda));
 	            detallesTexto.append(String.format("Tiempo con poda: %d ms\n", tiempoConPoda));
-	            detallesTexto.append(String.format("LLamadas recursivas sin poda %d\n", LlamadasRecursivas));
-	            detallesTexto.append(String.format("LLamadas recursivas con poda %d\n", LlamadasRecursivasPoda));
-	            detallesTexto.append(String.format("Caminos encontrados: %d\n", caminosEncontrados));
+	            detallesTexto.append(String.format("LLamadas recursivas sin poda: %d\n", LlamadasRecursivas));
+	            detallesTexto.append(String.format("LLamadas recursivas con poda: %d\n", LlamadasRecursivasPoda));
+	            detallesTexto.append(String.format("Caminos encontrados: %d\n", caminosRecursivos));
 	            detallesTexto.append(String.format("Mejora: %.2f%%\n\n", mejora));
 	            
 	            if (tiempoSinPoda > 0 && tiempoConPoda > 0) {
@@ -310,19 +348,88 @@ public class PanelResultados extends JPanel implements Observer {
 	       
 	    }
 	    
-	    private void exportarResultados() {
+	    public void exportarResultados() {
+	    	if (tablaModelo.getRowCount() == 0) {
+	            JOptionPane.showMessageDialog(this,
+	                "No hay datos para exportar",
+	                "Error",
+	                JOptionPane.WARNING_MESSAGE);
+	            return;
+	        }
+	    	
 	        JFileChooser fileChooser = new JFileChooser();
 	        fileChooser.setSelectedFile(new java.io.File("resultados_robot.csv"));
+	        fileChooser.setFileFilter(new FileNameExtensionFilter("Archivos CSV (*.csv)", "csv"));
 	        
 	        if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
-	            // exportación a CSV
-	            JOptionPane.showMessageDialog(this, 
-	                "funcionalidad de exportación pendiente jeje",
-	                "Información", JOptionPane.INFORMATION_MESSAGE);
+	        	File file = fileChooser.getSelectedFile();
+	        	
+	        	if (!file.getName().toLowerCase().endsWith(".csv")) {
+	                file = new File(file.getParentFile(), file.getName() + ".csv");
+	            }
+	        	 
+	        	 try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+	        		 
+	        		 writer.write("# Resultados de la ejecución del Robot");
+	                 writer.newLine();
+	                 
+	                 StringBuilder header = new StringBuilder();
+	                 for (int i = 0; i < tablaModelo.getColumnCount(); i++) {
+	                	 if (i > 0) header.append(",");
+	                	 header.append(escaparCampoCSV(tablaModelo.getColumnName(i)));
+	                 }
+	                 writer.write(header.toString());
+	                 writer.newLine();
+
+	                 for (int row = 0; row < tablaModelo.getRowCount(); row++) {
+	                	 StringBuilder line = new StringBuilder();
+	                	 for (int col = 0; col < tablaModelo.getColumnCount(); col++) {
+	                		 if (col > 0) line.append(", ");
+	                		 Object value = tablaModelo.getValueAt(row, col);
+	                		 line.append(escaparCampoCSV(value != null ? value.toString() : ""));
+	                	 }
+	                	 writer.write(line.toString());
+	                	 writer.newLine();
+	                 }
+
+	                 writer.newLine();
+	                 writer.write("# Estadísticas");
+	                 writer.newLine();
+	                 writer.write(escaparCampoCSV(testTotales.getText()));
+	                 writer.newLine();
+	                 writer.write(escaparCampoCSV(mejorTiempo.getText()));
+	                 writer.newLine();
+	                 writer.write(escaparCampoCSV(peorTiempo.getText()));
+	                 writer.newLine();
+	                 writer.write(escaparCampoCSV(tiempoPromedio.getText()));
+
+	                 JOptionPane.showMessageDialog(this,
+	                		 "Los resultados se han exportado exitosamente a:\n" + file.getAbsolutePath(),
+	                		 "Exportación exitosa",
+	                		 JOptionPane.INFORMATION_MESSAGE);
+
+	        	 } catch (IOException e) {
+	        		 JOptionPane.showMessageDialog(this,
+	        				 "Error al exportar los resultados: " + e.getMessage(),
+	        				 "Error de exportación",
+	        				 JOptionPane.ERROR_MESSAGE);
+	        	 }
 	        }
 	    }
-	    
-	    private void mostrarChart() {
+
+
+
+	    private String escaparCampoCSV(String campo) {
+	    	if (campo == null) {
+	    		return "";
+	    	}
+	    	if (campo.contains(",") || campo.contains("\"") || campo.contains("\n")) {
+	    		return "\"" + campo.replace("\"", "\"\"") + "\"";
+	    	}
+	    	return campo;
+	    }
+
+		private void mostrarChart() {
 	        if (tablaModelo.getRowCount() == 0) {
 	            JOptionPane.showMessageDialog(this,
 	                "No hay datos para mostrar en el gráfico",
@@ -330,10 +437,90 @@ public class PanelResultados extends JPanel implements Observer {
 	            return;
 	        }
 	        
-	        //gráfico con JFreeChart, pendiente
-	        JOptionPane.showMessageDialog(this,
-	            "hay que usar jfreechart para mostrar tiempos de ejecucion :]",
-	            "Información", JOptionPane.INFORMATION_MESSAGE);
+	        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+	        
+	        for (int i = 0; i < tablaModelo.getRowCount(); i++) {
+	            String grilla = (String) tablaModelo.getValueAt(i, 0);
+	            Long tiempoSinPoda = (Long) tablaModelo.getValueAt(i, 1);
+	            Long tiempoConPoda = (Long) tablaModelo.getValueAt(i, 2);
+	            
+	            dataset.addValue(tiempoSinPoda, "Sin Poda", grilla);
+	            dataset.addValue(tiempoConPoda, "Con Poda", grilla);
+	        }
+	        
+	        JFreeChart chart = ChartFactory.createBarChart(
+	                "Comparación de Tiempos de Ejecución", // título
+	                "Tamaño de Grilla",                    // etiqueta eje x
+	                "Tiempo (ms)",                         // etiqueta eje y
+	                dataset,
+	                PlotOrientation.VERTICAL,
+	                true,                                  // incluir leyenda
+	                true,                                  // incluir tooltips
+	                false                                  // incluir URLs
+	            );
+	        
+	        CategoryPlot plot = (CategoryPlot) chart.getPlot();
+	        BarRenderer renderer = (BarRenderer) plot.getRenderer();
+	        
+
+	        renderer.setSeriesPaint(0, new Color(79, 129, 189)); // azul para sin poda
+	        renderer.setSeriesPaint(1, new Color(192, 80, 77));  // rojo para con poda
+
+	        ChartPanel chartPanel = new ChartPanel(chart);
+	        chartPanel.setPreferredSize(new Dimension(800, 500));
+
+	        JFrame frame = new JFrame("Gráfico de Resultados");
+	        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+	        frame.add(chartPanel);
+	        frame.pack();
+	        frame.setLocationRelativeTo(null);
+	        frame.setVisible(true);
+	    }
+	    
+	    public void mostrarChartLineas() {
+	    	  if (tablaModelo.getRowCount() == 0) {
+	    	        JOptionPane.showMessageDialog(this,
+	    	            "No hay datos para mostrar en el gráfico",
+	    	            "Sin datos", JOptionPane.WARNING_MESSAGE);
+	    	        return;
+	    	    }
+
+	    	    DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+	    	    for (int i = 0; i < tablaModelo.getRowCount(); i++) {
+	    	        String grilla = (String) tablaModelo.getValueAt(i, 0);
+	    	        Long tiempoSinPoda = (Long) tablaModelo.getValueAt(i, 1);
+	    	        Long tiempoConPoda = (Long) tablaModelo.getValueAt(i, 2);
+
+	    	        dataset.addValue(tiempoSinPoda, "Sin Poda", grilla);
+	    	        dataset.addValue(tiempoConPoda, "Con Poda", grilla);
+	    	    }
+
+	    	    JFreeChart chart = ChartFactory.createLineChart(
+	    	        "Tendencia de Tiempos de Ejecución",  
+	    	        "Tamaño de Grilla",                   
+	    	        "Tiempo (ms)",                        
+	    	        dataset,
+	    	        PlotOrientation.VERTICAL,
+	    	        true,                                
+	    	        true,                                
+	    	        false                                
+	    	    );
+
+	    	    CategoryPlot plot = (CategoryPlot) chart.getPlot();
+	    	    plot.setBackgroundPaint(Color.WHITE);
+	    	    plot.setRangeGridlinePaint(Color.GRAY);
+	    	    plot.setDomainGridlinePaint(Color.GRAY);
+
+	    	    ChartPanel chartPanel = new ChartPanel(chart);
+	    	    chartPanel.setPreferredSize(new Dimension(800, 500));
+
+	    	    JFrame frame = new JFrame("Gráfico de Tendencias");
+	    	    frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+	    	    frame.add(chartPanel);
+	    	    frame.pack();
+	    	    frame.setLocationRelativeTo(null);
+	    	    frame.setVisible(true);
 	    }
 	    
 	    //getters 

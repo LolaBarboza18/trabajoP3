@@ -10,7 +10,12 @@ import java.net.URL;
 
 public class Vista extends JFrame {
 	
-    private JMenuBar menu;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	
+	private JMenuBar menu;
     private PanelGrilla grilla;
     private PanelControl panelDeControl;
     private PanelResultados panelResultados;
@@ -109,7 +114,7 @@ public class Vista extends JFrame {
 	        
 	        JMenuItem guardarResultado = new JMenuItem("Guardar Resultados...");
 	        guardarResultado.setMnemonic('R');
-	        guardarResultado.addActionListener(e -> guardarResultados());
+	        guardarResultado.addActionListener(e -> panelResultados.exportarResultados());
 	        
 	        menuArchivo.add(cargarGrilla);
 	        menuArchivo.addSeparator();
@@ -133,18 +138,6 @@ public class Vista extends JFrame {
 	        menu.add(menuOtro);
 	        
 	        setJMenuBar(menu);
-	    }
-	    
-	    private void guardarResultados() {
-	        JFileChooser archivoEscoge = new JFileChooser();
-	        archivoEscoge .setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(
-	            "Archivos CSV (*.csv)", "csv"));
-	        
-	        if (archivoEscoge .showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
-	            String archivoElegido = archivoEscoge.getSelectedFile().getAbsolutePath();
-	            panelEstado.setEstatus("Guardando resultados en: " + archivoElegido);
-	            // pendiente...
-	        }
 	    }
 	    
 	    private void mostrarFuncionamiento() {

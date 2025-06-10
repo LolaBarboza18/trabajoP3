@@ -8,9 +8,15 @@ import logica.Grilla;
 import logica.Observer;
 
 import java.awt.*;
+import java.io.IOException;
 
 public class PanelControl extends JPanel implements Observer{
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	
 	private JButton ejecutarAlgoritmos;
     private JButton limpiarResultados;
     private JButton cargarGrilla;
@@ -68,6 +74,11 @@ public class PanelControl extends JPanel implements Observer{
 		generarGrillaAleatoria.setToolTipText("Generar una nueva grilla con dimensiones especificadas.");
 	        
 		mostrarCamino = new JCheckBox("Mostrar camino encontrado", true);
+		mostrarCamino.addActionListener(e -> {
+	        if (panelGrilla != null) {
+	            panelGrilla.setMostrarCamino(mostrarCamino.isSelected());
+	        }
+	    });
 		resultadosDetalles = new JCheckBox("Resultados detallados", false);
 
 		infoGrilla = new JLabel();
@@ -163,6 +174,7 @@ public class PanelControl extends JPanel implements Observer{
                 
                 if (panelGrilla != null) {
                     panelGrilla.actualizarGrilla(nuevaGrilla, caminoOptimo);
+                    panelGrilla.setMostrarCamino(mostrarCamino.isSelected());
                 }
                 
                 if (panelResultados != null) {
@@ -170,11 +182,22 @@ public class PanelControl extends JPanel implements Observer{
                 }
                 actualizarInfoGrilla();
                 panelEstado.setEstatus("Archivo cargado exitosamente: " + archivo);
+            } catch (IllegalArgumentException e) {
+            	 JOptionPane.showMessageDialog(this,
+                         "El archivo tiene un formato inválido.\n" + e.getMessage(), "Error",
+                         JOptionPane.ERROR_MESSAGE);
+                panelEstado.setEstatus("Error: Formato de archivo inválido");
+            } catch (IOException e) {
+            	 JOptionPane.showMessageDialog(this,
+            			 "No se pudo leer el archivo:\n" + e.getMessage(), "Error",
+                         JOptionPane.ERROR_MESSAGE);
+                panelEstado.setEstatus("Error: No se pudo leer el archivo");
             } catch (Exception e) {
-                JOptionPane.showMessageDialog(this,
-                    "Error al cargar el archivo: " + e.getMessage(),
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE);
+            	 JOptionPane.showMessageDialog(this,
+                         "Error al cargar el archivo: " + e.getMessage(),
+                         "Error",
+                         JOptionPane.ERROR_MESSAGE);
+                panelEstado.setEstatus("Error: " + e.getMessage());
             }
         }
     }
@@ -190,8 +213,6 @@ public class PanelControl extends JPanel implements Observer{
     private void setupEventHandlers() {
     	ejecutarAlgoritmos.addActionListener(e -> {
     		ejecutarAlgoritmos();
-            panelEstado.setEstatus("Ejecutando fuerza bruta...");
-            
         });
         
         limpiarResultados.addActionListener(e -> {
@@ -217,13 +238,18 @@ public class PanelControl extends JPanel implements Observer{
     	setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
     	ejecutarAlgoritmos.setEnabled(false);
 
+    	panelEstado.setEstatus("Ejecutando algoritmos de fuerza bruta...");
+    	 
     	try {
     		caminoOptimo.ejecutarAmbos();
+    		if (panelGrilla != null) {
+                panelGrilla.setMostrarCamino(mostrarCamino.isSelected());
+            }
     	}catch (Exception ex) {
     		JOptionPane.showMessageDialog(this,
-    	            "Error al ejecutar los algoritmos: " + ex.getMessage(),
-    	            "Error",
-    	            JOptionPane.ERROR_MESSAGE);
+    	            "Algoritmos ejecutados: " + ex.getMessage(),
+    	            "Resultado inesperado de algoritmo",
+    	            JOptionPane.WARNING_MESSAGE);
     	        panelEstado.setEstatus("Error: " + ex.getMessage());
     	}
     
@@ -264,6 +290,7 @@ public class PanelControl extends JPanel implements Observer{
             caminoOptimo.agregarObserver(panelResultados);
             if (panelGrilla != null) {
                 panelGrilla.actualizarGrilla(nuevaGrilla, caminoOptimo);
+                panelGrilla.setMostrarCamino(mostrarCamino.isSelected());
             }
             if (panelResultados != null) {
                 panelResultados.setGrilla(nuevaGrilla);
@@ -305,13 +332,17 @@ public class PanelControl extends JPanel implements Observer{
 	@Override
 	public void actualizar() {
 		if (caminoOptimo.getCaminosEncontrados()>0) {
-		caminoValido.setText("Estado: Camino válido encontrado");
-    	caminoValido.setForeground(new Color(0, 120, 0));
+			caminoValido.setText("Estado: Camino válido encontrado");
+			caminoValido.setForeground(new Color(0, 120, 0));
+			if (panelEstado != null) {
+	            panelEstado.setEstatus("Algoritmo ejecutado - Se encontraron " + 
+	                                 caminoOptimo.getCaminosEncontrados() + " caminos válidos");
+	        }
 		} else{ 
 			caminoValido.setText("Estado: No se encontró camino válido");
 			caminoValido.setForeground(Color.RED);
 		}
-		
+
 	}
 	
 	public void actualizarGrilla(Grilla nuevaGrilla) {
@@ -319,16 +350,6 @@ public class PanelControl extends JPanel implements Observer{
 		 actualizarInfoGrilla();
 		
 	}
-
-    //getters 
-    public boolean estaActivadoMostrarCamino() {
-        return mostrarCamino.isSelected();
-    }
-    
-    public boolean estaActivadoResultadosDetallados() {
-        return resultadosDetalles.isSelected();
-    }
- 
 
     
 }
