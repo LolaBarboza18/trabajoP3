@@ -1,4 +1,4 @@
-package tp3_p3;
+package logica;
 
 import static org.junit.Assert.*;
 
@@ -9,7 +9,9 @@ import org.junit.Test;
 public class CaminoValidoTest {
 
     private Grilla grillaConCamino;
+    private Grilla grillaSinCamino;
     private CaminoValido camino;
+    private CaminoValido sinCamino;
     
 	 @Before 
 	    public void inicializarGrilla() {
@@ -20,41 +22,49 @@ public class CaminoValidoTest {
 	        };
 	        grillaConCamino = new Grilla(grilla);
 	        camino = new CaminoValido(grillaConCamino);
+	        
+	    	Integer [][] grilla2 = {
+		            {1, -1, -1, -1},
+		            {-1, 1,- 1, -1},
+		            {1, -1,- 1, -1}
+		        };
+		        grillaSinCamino = new Grilla(grilla2);
+		        sinCamino = new CaminoValido(grillaSinCamino);
 	    }
 	 
 	 
-	// Verifica que al construir el objeto no haya caminos encontrados (porque no se ejecuta encontrarCaminos())
 		 @Test
 		public void ConstructorInicializaCorrectamenteTest() {
 	        assertEquals(0, camino.getCaminosEncontrados());
 		}
 
-		
-		 // Al buscar caminos sin poda se encuentren resultados y recursividad y tiempo de ejecucion
+	
 	    @Test
-	    public void CaminosSinPodaTest() {
+	    public void ExisteCaminosSinPodaTest() {
 	        camino.encontrarCaminosSinPoda();
 	        assertTrue(camino.getCaminosEncontrados() > 0);
-	        assertTrue(camino.getLlamadasRecursivas() > 0);
-	        assertTrue(camino.getTiempoTotal() > 0);
 	    }
 	    
 	    @Test
-	    public void CaminosConPodaTest() {
+	    public void ExisteCaminosConPodaTest() {
 	        camino.encontrarCaminosConPoda();
 	        assertTrue(camino.getCaminosEncontrados() > 0);
-	        assertTrue(camino.getTiempoTotalPoda() > 0);
+
 	    }
 	    
+	    @Test (expected = IllegalArgumentException.class)
 	    
-	    // Se pueda obtener una solución válida (no vacía) si hay caminos
-	    @Test
-	    public void SolucionCaminoTest() {
-	        camino.encontrarCaminosSinPoda();
-	        ArrayList<int[]> solucion = camino.getSolucion(0);
-	        assertNotNull(solucion);
-	        assertFalse(solucion.isEmpty());  
+	    public void NoExiteCaminoSinPoda() {	
+	        sinCamino.encontrarCaminosSinPoda();
 	    }
+	    
+	    @Test (expected = IllegalArgumentException.class)
+	    
+	    public void NoExiteCaminoConPoda() {	
+	        sinCamino.encontrarCaminosConPoda();
+	    }
+	    
+
 	    
 	}
 

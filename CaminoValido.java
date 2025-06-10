@@ -1,4 +1,4 @@
-package tp3_p3;
+package logica;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,13 +14,11 @@ public class CaminoValido {
 	private int m;
 	private long tiempoTotal;
 	private long tiempoTotalPoda;
+	private long tiempoTotalSinPoda;
 	private ArrayList <Observer> observers;
 
 	
 	public  CaminoValido (Grilla g){
-		this.caminosEncontrados = 0;
-		this.llamadasRecursivas = 0;
-		this.llamadasRecursivasPoda = 0;
 		this.caminosValidos = new ArrayList<>();
 		this.grilla= g; 
 		this.n= g.getMatriz().length;
@@ -41,11 +39,9 @@ public class CaminoValido {
 		caminosValidos.clear();
 		
 		buscarSinPoda(0, 0, 0, new ArrayList<>());
-		tiempoTotal= calculoTiempo(inicio);
-		System.out.println("Encontrar caminos sin poda: Resultados");
+		tiempoTotalSinPoda= calculoTiempo(inicio);
 		verificacionDeBusqueda();	
-		System.out.println("El tiempo  total fue de " + tiempoTotal + " nanosegundos");
-		avisarObserver();
+
 	} 
 	
 	private void buscarSinPoda(int i, int j, int suma, List<int[]> camino) {
@@ -72,33 +68,33 @@ public class CaminoValido {
 	
 	public void encontrarCaminosConPoda() {
 		long inicio = System.nanoTime();
-		llamadasRecursivas = 0;
+		llamadasRecursivasPoda = 0;
 		caminosEncontrados = 0;
 		caminosValidos.clear();
 		
 		buscarConPoda(0, 0, 0, 0, new ArrayList<>());
-		tiempoTotalPoda= calculoTiempo(inicio);
-		System.out.println("Encontrar caminos con poda: Resultados");
-		
+		tiempoTotalPoda= calculoTiempo(inicio);		
 		verificacionDeBusqueda();	
-		System.out.println("El tiempo  total fue de " + tiempoTotalPoda + " nanosegundos");
-		avisarObserver();
+
 	}
 
+	public void ejecutarAmbos() {
+		long inicio = System.nanoTime();
+		encontrarCaminosSinPoda();
+		encontrarCaminosConPoda();
+		tiempoTotal = calculoTiempo(inicio);
+	    avisarObserver();           //  Solo aca se usa el Observer
+	}
+	
 	private void verificacionDeBusqueda() {
 		if (caminosEncontrados == 0) {
 			throw new IllegalArgumentException("No se ha podido encontrar un camino.");
         }
-
-		System.out.println("Llamadas recursivas: " + llamadasRecursivas);
-		System.out.println("Llamadas recursivas con poda: " + llamadasRecursivasPoda);
-		System.out.println("Caminos válidos encontrados: " + caminosEncontrados);
-		
 	}
 
 	private long calculoTiempo(long inicio) {
 		long fin = System.nanoTime();
-		long Total = (fin - inicio);
+		long Total = (fin - inicio)/1000000;
 		return Total;
 	}
 	
@@ -149,15 +145,27 @@ public class CaminoValido {
 		return soluciones;
 	} 
 	
-	
+	public GrillaSolucion darSolucion () {
+		if (caminosValidos == null) {
+			throw new IllegalArgumentException("No se ha podido encontrar un camino por lo que no hay una solucion valida");
+		}
+		else {
+			
+			GrillaSolucion g = new GrillaSolucion(this, grilla);
+			return g;
+		}
+	}
 
 	public void avisarObserver() {
 		for (Observer obs : observers) {
-			obs.actualizar(this);
+			obs.actualizar();
 		}
 	}
 	
 	public int getCaminosEncontrados() {
+		return this.caminosEncontrados;
+	}
+	public int getCaminosEncontradosPoda() {
 		return this.caminosEncontrados;
 	}
 	
@@ -165,31 +173,18 @@ public class CaminoValido {
 		return this.llamadasRecursivas;
 	}
 	
+	public int getLlamadasRecursivasPoda() {
+		return this.llamadasRecursivasPoda;
+	}
 	public long getTiempoTotal() {
 		return this.tiempoTotal;
 	}
 	public long getTiempoTotalPoda() {
 		return this.tiempoTotalPoda;
 	}
-	
-	
-	
-	
-	
-	
-	
-	public static void main(String[] args) {	
-//	Integer[][] grilla = {
-//            {1, -1, 1, 1},
-//            {-1, 1, -1, 1},
-//            {1, -1, -1, -1}
-//        };
-//	
-//	Grilla g = new Grilla (grilla);
-	
-		Grilla g = new Grilla (3,4);
-	CaminoValido c = new CaminoValido(g);
-	c.encontrarCaminosSinPoda();
-	c.mostrarCaminosGuardados();
+	public long getTiempoTotalSinPoda() {
+		return this.tiempoTotalSinPoda;
 	}
+
+	
 }

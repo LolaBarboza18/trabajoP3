@@ -1,15 +1,17 @@
-package tp3_p3;
+package interfaz;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
+
+import logica.CaminoValido;
+import logica.Grilla;
+import logica.Observer;
+
 import java.awt.*;
-import java.awt.event.ActionListener;
 
 public class PanelControl extends JPanel implements Observer{
 
 	private JButton ejecutarAlgoritmos;
-	private JSpinner numeroEjecuciones;
-    private JLabel labelEjecuciones;
     private JButton limpiarResultados;
     private JButton cargarGrilla;
     private JButton generarGrillaAleatoria;
@@ -28,8 +30,8 @@ public class PanelControl extends JPanel implements Observer{
     private CaminoValido caminoOptimo;
 
 
-	public PanelControl(Grilla g, CaminoValido camino) {
-		initialize(g, camino);
+	public PanelControl() {
+		initialize();
 		panelLayout();
         setupEventHandlers();
 	}
@@ -42,25 +44,17 @@ public class PanelControl extends JPanel implements Observer{
 	        this.panelResultados = panel;
 	    }
 
-	private void initialize(Grilla g, CaminoValido camino) {
+	private void initialize() {
 		setBorder(BorderFactory.createTitledBorder(
 	            BorderFactory.createEtchedBorder(), 
 	            "Panel de Control", 
 	            TitledBorder.CENTER, 
 	            TitledBorder.TOP));
-		
-		this.grilla = g;
-		this.caminoOptimo = camino;
-	    caminoOptimo.agregarObserver(this);
+
 
 		ejecutarAlgoritmos = new JButton("Ejecutar Algoritmos");
 		ejecutarAlgoritmos.setPreferredSize(new Dimension(300, 30));
 		ejecutarAlgoritmos.setToolTipText("Ejecuta el algoritmo de fuerza bruta con y sin poda.");
-		
-        labelEjecuciones = new JLabel("Número de ejecuciones:");
-        SpinnerNumberModel spinnerModel = new SpinnerNumberModel(1, 1, 100, 1);
-        numeroEjecuciones = new JSpinner(spinnerModel);
-        numeroEjecuciones.setPreferredSize(new Dimension(40, 25));
 
 		limpiarResultados = new JButton("Limpiar Resultados");
 		limpiarResultados.setPreferredSize(new Dimension(180, 30));
@@ -107,9 +101,6 @@ public class PanelControl extends JPanel implements Observer{
         
         JPanel panelPrincipal = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
-        // GridBagConstraints: sirve para manejar características de los componentes
-        // que estén siendo mostrados en pantalla con GridBagLayout, un tipo de Layout
-        // como BoxLayout, BorderLayout, etc
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         
@@ -127,12 +118,6 @@ public class PanelControl extends JPanel implements Observer{
         gbc.gridx = 0; gbc.gridy = 2; gbc.gridwidth = 2;
         panelPrincipal.add(new JSeparator(), gbc);
         
-        gbc.gridwidth = 1;
-        gbc.gridx = 0; gbc.gridy = 4;
-        panelPrincipal.add(labelEjecuciones, gbc);
-        gbc.gridx = 1; gbc.gridy = 4;
-        panelPrincipal.add(numeroEjecuciones, gbc);
-        
         gbc.gridwidth = 2;
         gbc.gridx = 0; gbc.gridy = 3;
         panelPrincipal.add(ejecutarAlgoritmos, gbc);
@@ -143,11 +128,7 @@ public class PanelControl extends JPanel implements Observer{
         gbc.gridwidth = 0;
         gbc.gridy = 6;
         panelPrincipal.add(limpiarResultados, gbc);
-        
-        // todos los gbc.metodos son reservados de la clase GridBagContraints
-        // esto es de AWT para interfaz grafica java, ahora asumo que también
-        // hay algo similar en WB/Swing, después lo combiaré o lo dejo así y ya fue xd
-        
+   
         add(panelPrincipal, BorderLayout.CENTER);
     }
     
@@ -172,15 +153,21 @@ public class PanelControl extends JPanel implements Observer{
             try {
                 Grilla nuevaGrilla = new Grilla(archivo);
                 this.grilla = nuevaGrilla;
+                this.caminoOptimo = new CaminoValido(nuevaGrilla);
+
+                panelResultados.setCaminoOptimo(caminoOptimo);
+                caminoOptimo.agregarObserver(panelGrilla);
+                caminoOptimo.agregarObserver(this);
+                caminoOptimo.agregarObserver(panelResultados);
+                
                 
                 if (panelGrilla != null) {
-                    panelGrilla.actualizarGrilla(nuevaGrilla);
+                    panelGrilla.actualizarGrilla(nuevaGrilla, caminoOptimo);
                 }
                 
-                // visualizacion debug
-                System.out.println("Grilla cargada correctamente:");
-                System.out.println("Dimensiones: " + nuevaGrilla.getMatriz().length + "x" + nuevaGrilla.getMatriz()[0].length);
-                
+                if (panelResultados != null) {
+                    panelResultados.setGrilla(nuevaGrilla);
+                }
                 actualizarInfoGrilla();
                 panelEstado.setEstatus("Archivo cargado exitosamente: " + archivo);
             } catch (Exception e) {
@@ -201,18 +188,15 @@ public class PanelControl extends JPanel implements Observer{
     }
     
     private void setupEventHandlers() {
-        // pendiente
-        
     	ejecutarAlgoritmos.addActionListener(e -> {
-            //setBotones(false); 		//ESTO ES PARA QUE SE HABILITE SIEMPRE
-    		int numEjecuciones = (Integer) numeroEjecuciones.getValue();
-    		ejecutarMultiplesVeces(numEjecuciones);
+    		ejecutarAlgoritmos();
             panelEstado.setEstatus("Ejecutando fuerza bruta...");
             
         });
         
         limpiarResultados.addActionListener(e -> {
             caminoValido.setText("Estado: Sin ejecutar");
+            panelGrilla.limpiarCamino();
             if (panelEstado != null) {
                 panelEstado.setEstatus("Resultados limpiados");
             }
@@ -221,16 +205,16 @@ public class PanelControl extends JPanel implements Observer{
         generarGrillaAleatoria.addActionListener(e -> crearGrillaAleatoria());
     }
     
-    private void ejecutarMultiplesVeces(int numEjecuciones) {
+    private void ejecutarAlgoritmos() {
     	setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
     	ejecutarAlgoritmos.setEnabled(false);
 
-    	for (int i = 0; i < numEjecuciones; i++) {
-
-    		caminoOptimo.encontrarCaminosSinPoda();
-    		caminoOptimo.encontrarCaminosConPoda();
+    	try {
+    		caminoOptimo.ejecutarAmbos();
+    	}catch (IllegalArgumentException ex) {
+    		JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
     	}
-
+    
     	ejecutarAlgoritmos.setEnabled(true);
     	setCursor(Cursor.getDefaultCursor());
     }
@@ -272,9 +256,18 @@ public class PanelControl extends JPanel implements Observer{
             
             Grilla nuevaGrilla = new Grilla(filas, cols);
             this.grilla = nuevaGrilla;
+            this.caminoOptimo = new CaminoValido(nuevaGrilla);
             
+            panelResultados.setCaminoOptimo(caminoOptimo);
+
+            caminoOptimo.agregarObserver(panelGrilla);
+            caminoOptimo.agregarObserver(this);
+            caminoOptimo.agregarObserver(panelResultados);
             if (panelGrilla != null) {
-                panelGrilla.actualizarGrilla(nuevaGrilla);
+                panelGrilla.actualizarGrilla(nuevaGrilla, caminoOptimo);
+            }
+            if (panelResultados != null) {
+                panelResultados.setGrilla(nuevaGrilla);
             }
             
             actualizarInfoGrilla();
@@ -297,10 +290,13 @@ public class PanelControl extends JPanel implements Observer{
     }
     
     public void actualizarInfoGrilla() {
-    	int filas= grilla.getMatriz().length;
-		int col= grilla.getMatriz()[0].length;
-        infoGrilla.setText(String.format("Grilla: %dx%d (%d celdas)", filas, col, filas * col));
-        
+    	if (grilla == null) {
+    		infoGrilla.setText(String.format("Aun no se ha cargado una grilla"));
+    	} else {
+	    	int filas= grilla.getMatriz().length;
+			int col= grilla.getMatriz()[0].length;
+	        infoGrilla.setText(String.format("Grilla: %dx%d (%d celdas)", filas, col, filas * col));
+    	} 
     }
     
     public void setEstadoEjecucion(String estado) {
@@ -310,8 +306,8 @@ public class PanelControl extends JPanel implements Observer{
     
     
 	@Override
-	public void actualizar(CaminoValido cv) {
-		if (cv.getCaminosEncontrados()>0) {
+	public void actualizar() {
+		if (caminoOptimo.getCaminosEncontrados()>0) {
 		caminoValido.setText("Estado: Camino válido encontrado");
     	caminoValido.setForeground(new Color(0, 120, 0));
 		} else{ 

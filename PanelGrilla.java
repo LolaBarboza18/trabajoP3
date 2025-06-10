@@ -1,22 +1,31 @@
-package tp3_p3;
+package interfaz;
 
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import javax.swing.*;
 import java.awt.*;
 import javax.swing.border.TitledBorder;
+
+import logica.CaminoValido;
+import logica.Grilla;
+import logica.GrillaSolucion;
+import logica.Observer;
+
 import java.util.List;
 
-public class PanelGrilla extends JPanel {
+public class PanelGrilla extends JPanel implements Observer {
 
-	private Grilla grilla;
+
+	private CaminoValido camino;
 	private Integer[][] matrizGrilla;
 	private int filas;
 	private int columnas;
-	private List<Point> caminoActual;
+
+	private Graphics2D g2d;
 
 	private int tamanoCelda = 40;
-	private boolean mostrarCamino = false;
+//	private boolean mostrarCamino = false;
+	private GrillaSolucion solucion;
 
 	/**
 	 * Create the application.
@@ -24,8 +33,7 @@ public class PanelGrilla extends JPanel {
 	
 	public PanelGrilla() {
 		initialize();
-//      dibujarGrillaDefault();
-//		ya no se inicializa la grilla acá, es null hasta que se cargue
+
 	}
 
 	/**
@@ -68,7 +76,7 @@ public class PanelGrilla extends JPanel {
 	            return;
 	        }
 	        
-	        Graphics2D g2d = (Graphics2D) g.create();
+	        g2d = (Graphics2D) g.create();
 	        // Graphics2D: clase de Java que extiende de Graphics
 	        // para dibujar figuras en pantalla con más precisión geometrica. Dibuja sobre un objeto Component.
 	        // Es de la libreria de java.awt. Info de Oracle. :9
@@ -77,13 +85,11 @@ public class PanelGrilla extends JPanel {
 	        int comienzoX = (getWidth() - columnas * tamanoCelda) / 2;
 	        int comienzoY = (getHeight() - filas * tamanoCelda) / 2 + 10;
 	        
-	        if (mostrarCamino && caminoActual != null) {
-	            dibujarCamino(g2d, comienzoX, comienzoY);
-	        }
-	        
+
 	        dibujarGrilla(g2d, comienzoX, comienzoY);
 	        
 	        dibujarPosicionesComienzoFin(g2d, comienzoX, comienzoY);
+	        dibujarSolucion();
 	        
 	        g2d.dispose();
 	    }
@@ -94,25 +100,7 @@ public class PanelGrilla extends JPanel {
 	                int x = stX + j * tamanoCelda;
 	                int y = stY + i * tamanoCelda;
 	                
-	                g2d.setColor(Color.WHITE);
-	                g2d.fillRect(x, y, tamanoCelda, tamanoCelda);
-	                
-	                g2d.setColor(Color.GRAY);
-	                g2d.drawRect(x, y, tamanoCelda, tamanoCelda);
-	                
-	                g2d.setColor(Color.BLACK);
-	                g2d.setFont(new Font("Arial", Font.BOLD, tamanoCelda / 3));
-	                if (matrizGrilla[i][j] != null) {
-	                    g2d.setColor(Color.BLACK);
-	                    g2d.setFont(new Font("Arial", Font.BOLD, tamanoCelda / 3));
-	                    String valor = (matrizGrilla[i][j] == 1) ? "+1" : "-1";
-	                    
-	                    FontMetrics fm = g2d.getFontMetrics();
-	                    int textX = x + (tamanoCelda - fm.stringWidth(valor)) / 2;
-	                    int textY = y + (tamanoCelda + fm.getAscent()) / 2;
-	                    
-	                    g2d.drawString(valor, textX, textY);
-	                }
+	                pintarCelda(g2d, i, j, x, y, Color.WHITE);
 	            
 	                
 	                // FontMetrics: de la libreria de java.awt también, encapsula info 
@@ -125,6 +113,28 @@ public class PanelGrilla extends JPanel {
 	            }
 	        }
 	    }
+
+		private void pintarCelda(Graphics2D g2d, int i, int j, int x, int y, Color color) {
+			g2d.setColor(color);
+			g2d.fillRect(x, y, tamanoCelda, tamanoCelda);
+			
+			g2d.setColor(Color.GRAY);
+			g2d.drawRect(x, y, tamanoCelda, tamanoCelda);
+			
+			g2d.setColor(Color.BLACK);
+			g2d.setFont(new Font("Arial", Font.BOLD, tamanoCelda / 3));
+			if (matrizGrilla[i][j] != null) {
+			    g2d.setColor(Color.BLACK);
+			    g2d.setFont(new Font("Arial", Font.BOLD, tamanoCelda / 3));
+			    String valor = (matrizGrilla[i][j] == 1) ? "+1" : "-1";
+			    
+			    FontMetrics fm = g2d.getFontMetrics();
+			    int textX = x + (tamanoCelda - fm.stringWidth(valor)) / 2;
+			    int textY = y + (tamanoCelda + fm.getAscent()) / 2;
+			    
+			    g2d.drawString(valor, textX, textY);
+			}
+		}
 	    
 	    private void dibujarPosicionesComienzoFin(Graphics2D g2d, int stX, int stY) {
 	        g2d.setStroke(new BasicStroke(3));
@@ -138,54 +148,18 @@ public class PanelGrilla extends JPanel {
 	        g2d.drawString("FIN", finX + 5, finY - 5);
 	    }
 	    
-	    private void dibujarCamino(Graphics2D g2d, int stX, int stY) {
-	        if (caminoActual.size() < 2) {
-	        	return;
-	        }
-	        
-	        g2d.setColor(new Color(255, 165, 0, 128));
-	        g2d.setStroke(new BasicStroke(tamanoCelda / 4, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-	        
-	        for (int i = 0; i < caminoActual.size() - 1; i++) {
-	            Point p1 = caminoActual.get(i);
-	            Point p2 = caminoActual.get(i + 1);
-	            
-	            int x1 = stX + p1.y * tamanoCelda + tamanoCelda / 2;
-	            int y1 = stY + p1.x * tamanoCelda + tamanoCelda / 2;
-	            int x2 = stX + p2.y * tamanoCelda + tamanoCelda / 2;
-	            int y2 = stY + p2.x * tamanoCelda + tamanoCelda / 2;
-	            
-	            g2d.drawLine(x1, y1, x2, y2);
-	        }
-	        
-	        g2d.setColor(Color.ORANGE);
-	        for (Point p : caminoActual) {
-	            int x = stX + p.y * tamanoCelda + tamanoCelda / 2 - 3;
-	            int y = stY + p.x * tamanoCelda + tamanoCelda / 2 - 3;
-	            g2d.fillOval(x, y, 6, 6);
-	        }
-	    }
 
-	    public void actualizarGrilla(Grilla grilla) {
+
+	    public void actualizarGrilla(Grilla grilla, CaminoValido cv) {
 	    	if (grilla != null) {
-	            this.grilla = grilla;
+	    		this.camino = cv;
+	    		this.solucion = null;
+
 	            this.matrizGrilla = grilla.getMatriz();
 	            if (this.matrizGrilla != null) {
 	                this.filas = matrizGrilla.length;
 	                this.columnas = matrizGrilla[0].length;
-	                
-	                // visualizacion debug
-	                System.out.println("Actualizando grilla:");
-	                System.out.println("Filas: " + filas);
-	                System.out.println("Columnas: " + columnas);
-	                System.out.println("Tamaño celda: " + tamanoCelda);
-	                for (int i = 0; i < filas; i++) {
-	                    for (int j = 0; j < columnas; j++) {
-	                        System.out.print(matrizGrilla[i][j] + " ");
-	                    }
-	                    System.out.println();
-	                }
-	                
+	               
 	                calculoTamanoCelda();
 	                invalidate();
 	                revalidate();
@@ -208,22 +182,50 @@ public class PanelGrilla extends JPanel {
 	        }
 	    }
 	    
-	    public void setCamino(List<Point> camino) {
-	        this.caminoActual = camino;
-	        // (camino != null && !camino.isEmpty());
-	        repaint();
+	    
+	    public void actualizar() {
+	    	solucion = camino.darSolucion();
+	    	repaint();
+	    }
+
+		private void dibujarSolucion() {
+			
+			if (solucion == null) {
+				return;
+			}else{
+				
+					int comienzoX = (getWidth() - columnas * tamanoCelda) / 2;
+				
+		        int comienzoY = (getHeight() - filas * tamanoCelda) / 2 + 10;
+		        for (int i = 0; i < filas; i++) {
+		            for (int j = 0; j < columnas; j++) {
+		                int x = comienzoX + j * tamanoCelda;
+		                int y = comienzoY + i * tamanoCelda;
+		                
+		                if (solucion.esPaso(i,j)) {
+		                
+		                pintarCelda(g2d, i, j, x, y, Color.ORANGE);
+		            }
+		            else{
+		            	pintarCelda(g2d, i, j, x, y, Color.WHITE);
+		            }
+	        }}
+	    }
+		} 
+	    
+	    
+	    
+	    public void setCamino(CaminoValido cv) {
+	        this.camino = cv;
+
 	    }
 	    
 	    public void limpiarCamino() {
-	        this.caminoActual = null;
-	        this.mostrarCamino = false;
+	        this.camino = null;
+//	        this.mostrarCamino = false;
 	        repaint();
 	    }
-	    
-	    public void colorearCamino(List<Point> camino) {
-	        setCamino(camino);
-	    }
-	    
+
 	    // getters
 	    public Integer[][] getGrilla() {
 	        return matrizGrilla;

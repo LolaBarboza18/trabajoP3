@@ -1,6 +1,10 @@
-package tp3_p3;
+package interfaz;
 
 import javax.swing.*;
+
+//import logica.CaminoValido;
+//import logica.Grilla;
+
 import java.awt.*;
 import java.net.URL;
 
@@ -16,8 +20,6 @@ public class Vista extends JFrame {
     private JPanel panelIzquierdo;
     private JPanel panelDerecho;
     
-    private Grilla g;
-    private CaminoValido caminoOptimo;
 	/**
 	 * Launch the application.
 	 */
@@ -53,13 +55,8 @@ public class Vista extends JFrame {
         setLocationRelativeTo(null);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		grilla = new PanelGrilla();
-		Integer[][] gr = {{-1, +1}};
-		g = new Grilla(gr);
-		grilla.actualizarGrilla(g);
-		caminoOptimo = new CaminoValido(g);
-		
-        panelDeControl = new PanelControl(g,caminoOptimo);
-        panelResultados = new PanelResultados(g,caminoOptimo);
+      panelResultados = new PanelResultados();
+        panelDeControl = new PanelControl();
         panelEstado = new PanelEstado();
         principal = new JPanel(new BorderLayout());
         panelIzquierdo = new JPanel(new BorderLayout());
@@ -89,10 +86,10 @@ public class Vista extends JFrame {
 
 	 private void pantallaLayout() {
 		 panelIzquierdo.add(grilla, BorderLayout.CENTER);
-		 panelDerecho.add(panelDeControl, BorderLayout.NORTH);
+
 		 panelDerecho.add(panelResultados, BorderLayout.CENTER);
 		 panelDerecho.add(panelEstado, BorderLayout.SOUTH);
-
+		 panelDerecho.add(panelDeControl, BorderLayout.NORTH);
 		 JSplitPane splitPanel = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panelIzquierdo, panelDerecho);
 		 splitPanel.setDividerLocation(600);
 		 splitPanel.setResizeWeight(0.6);
@@ -138,35 +135,6 @@ public class Vista extends JFrame {
 	        menu.add(menuOtro);
 	        
 	        setJMenuBar(menu);
-	    }
-	    
-	    
-	    private void cargarGrillaDeArchivo() {
-	        JFileChooser seleccionaArchivo = new JFileChooser();
-	        seleccionaArchivo.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(
-	            "Archivos de texto (*.txt)", "txt"));
-	        
-	        if (seleccionaArchivo.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-	            String archivo = seleccionaArchivo.getSelectedFile().getAbsolutePath();
-	            try {
-	                Grilla nuevaGrilla = new Grilla(archivo);
-	                this.g = nuevaGrilla;
-	                this.caminoOptimo = new CaminoValido(nuevaGrilla);
-	                grilla.actualizarGrilla(nuevaGrilla);
-	                panelDeControl.actualizarGrilla(nuevaGrilla);
-
-	                panelEstado.setEstatus("Archivo cargado exitosamente: " + archivo);
-	                
-	                // para ver
-	                System.out.println("Grilla cargada desde archivo:");
-	                System.out.println("Dimensiones: " + nuevaGrilla.getMatriz().length + "x" + nuevaGrilla.getMatriz()[0].length);
-	                
-	            } catch (Exception e) {
-	                String mensaje = "Error al cargar el archivo: " + e.getMessage();
-	                System.err.println(mensaje);
-	                JOptionPane.showMessageDialog(this, mensaje, "Error", JOptionPane.ERROR_MESSAGE);
-	            }
-	        }
 	    }
 	    
 	    private void guardarResultados() {

@@ -1,9 +1,14 @@
-package tp3_p3;
+package interfaz;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
+
+import logica.CaminoValido;
+import logica.Grilla;
+import logica.Observer;
+
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -40,8 +45,15 @@ public class PanelResultados extends JPanel implements Observer {
 	 * @param camino 
 	 * @param g 
 	 */
-	public PanelResultados(Grilla g, CaminoValido camino) {
-		initialize(g, camino);
+    public void setGrilla (Grilla g) {
+    	this.grilla = g;
+    }
+    public void setCaminoOptimo(CaminoValido cv) {
+    	this.caminoOptimo= cv;
+    }
+    
+	public PanelResultados() {
+		initialize();
         panelLayout();
         setupEventHandlers();
 	}
@@ -49,7 +61,7 @@ public class PanelResultados extends JPanel implements Observer {
 	/**
 	 * Initialize the contents of the frame.
 	 */
-	private void initialize(Grilla g, CaminoValido camino) {
+	private void initialize() {
 		setBorder(BorderFactory.createTitledBorder(
 	            BorderFactory.createEtchedBorder(), 
 	            "Resultados", 
@@ -57,15 +69,16 @@ public class PanelResultados extends JPanel implements Observer {
 	            TitledBorder.TOP));
 	        
 	        String[] nombresCols = {
-	            "Grilla", "Sin Podas (ms)", "Con Podas (ms)", 
-	            "Caminos Sin Podas", "Caminos Con Podas", "Mejora (%)"
+		            "Grilla", 
+		            "Sin Podas (ms)", 
+		            "Con Podas (ms)", 
+		            "Caminos encontrados Con y Sin Podas", 
+		            "Llamados recursivos",
+		            "Llamados recursivos con poda",
+		            "Mejora (%)"
 	        };
 	        
 	        tablaModelo = new DefaultTableModel(nombresCols, 0) {
-				// DefaultTableModel: componente de Swing/WB que construye una tabla con
-				// la cant de strings pasados por parametros como columnas, filas en 0
-	        	// porque se van agregando con las ejecuciones
-	        	
 	            @Override
 	            public boolean isCellEditable(int f, int c) {
 	                return false; 
@@ -74,17 +87,13 @@ public class PanelResultados extends JPanel implements Observer {
 	            @Override
 	            public Class<?> getColumnClass(int columnIndex) {
 	                switch (columnIndex) {
-	                    case 0: return String.class;  // grilla
-	                    case 1: case 2: return Long.class;    // tiempos
-	                    case 3: case 4: return Integer.class; // caminos
-	                    case 5: return Double.class;  // mejora
-	                    default: return String.class;
+                    case 0: return String.class;  // grilla
+                    case 1: case 2: return Long.class;    // tiempos
+                    case 3: return Integer.class; // caminos
+                    case 4: return Double.class;  // mejora
+                    default: return String.class;
 	                   
 	                }
-	                // isCellEditable lo tengo que settear en false, porque siempre devuelve true
-	                // y es para que se pueda editar la celda, lo cual no debería pasar
-	                // getColumnClass devuelve las superclases de los objetos en las celdas
-	                // ambos son métodos reservados de DefaultTableModel y JTable
 	            }
 	        };
 	        
@@ -94,15 +103,16 @@ public class PanelResultados extends JPanel implements Observer {
 	        resultados.getTableHeader().setReorderingAllowed(false);
 	        
 	        TableRowSorter<DefaultTableModel> orden = new TableRowSorter<>(tablaModelo);
-	        // TableRowSorter: método/implementación reservado de JTable para ordenar
-	        // los elementos de las columnas
 	        resultados.setRowSorter(orden);
 	        
 	        resultados.getColumn("Grilla").setPreferredWidth(80);
 	        resultados.getColumn("Sin Podas (ms)").setPreferredWidth(100);
 	        resultados.getColumn("Con Podas (ms)").setPreferredWidth(100);
-	        resultados.getColumn("Caminos Sin Podas").setPreferredWidth(120);
-	        resultados.getColumn("Caminos Con Podas").setPreferredWidth(120);
+
+	        resultados.getColumn("Caminos encontrados Con y Sin Podas").setPreferredWidth(120);
+	        resultados.getColumn("Llamados recursivos").setPreferredWidth(120);
+	        resultados.getColumn("Llamados recursivos con poda").setPreferredWidth(120);
+
 	        resultados.getColumn("Mejora (%)").setPreferredWidth(80);
 	        
 	        tablaScroll = new JScrollPane(resultados);
@@ -128,9 +138,6 @@ public class PanelResultados extends JPanel implements Observer {
 	        limpiarTabla.setPreferredSize(new Dimension(120, 30));
 	        
 	        pestañas = new JTabbedPane();
-	        grilla = g;
-			caminoOptimo = camino;
-		    caminoOptimo.agregarObserver(this); 
 	}
 	
 	public void setMostrarDetalles(boolean mostrar) {
@@ -219,28 +226,35 @@ public class PanelResultados extends JPanel implements Observer {
 	            StringBuilder detallesTexto = new StringBuilder();
 	            detallesTexto.append("DETALLES DE LA EJECUCIÓN\n");
 	            detallesTexto.append("========================\n\n");
-	            
+	            	            
 	            String tamanoGrilla = (String) tablaModelo.getValueAt(modelRow, 0);
 	            Long tiempoSinPoda = (Long) tablaModelo.getValueAt(modelRow, 1);
 	            Long tiempoConPoda = (Long) tablaModelo.getValueAt(modelRow, 2);
-	            Integer caminosSinPoda = (Integer) tablaModelo.getValueAt(modelRow, 3);
-	            Integer caminosConPoda = (Integer) tablaModelo.getValueAt(modelRow, 4);
-	            Double mejora = (Double) tablaModelo.getValueAt(modelRow, 5);
+
+	            Integer LlamadasRecursivasPoda = (Integer) tablaModelo.getValueAt(modelRow, 3);
+	            Integer LlamadasRecursivas = (Integer) tablaModelo.getValueAt(modelRow, 4);
+	            Integer caminosEncontrados = (Integer) tablaModelo.getValueAt(modelRow, 5);
+
+	            Integer caminosRecursivos = (Integer) tablaModelo.getValueAt(modelRow, 3);
+
+
+	            Double mejora  = (Double) tablaModelo.getValueAt(modelRow, 6);
 	            
 	            detallesTexto.append(String.format("Tamaño de grilla: %s\n", tamanoGrilla));
 	            detallesTexto.append(String.format("Tiempo sin poda: %d ms\n", tiempoSinPoda));
 	            detallesTexto.append(String.format("Tiempo con poda: %d ms\n", tiempoConPoda));
-	            detallesTexto.append(String.format("Caminos explorados sin poda: %d\n", caminosSinPoda));
-	            detallesTexto.append(String.format("Caminos explorados con poda: %d\n", caminosConPoda));
+	            detallesTexto.append(String.format("LLamadas recursivas sin poda %d\n", LlamadasRecursivas));
+	            detallesTexto.append(String.format("LLamadas recursivas con poda %d\n", LlamadasRecursivasPoda));
+	            detallesTexto.append(String.format("Caminos encontrados: %d\n", caminosEncontrados));
 	            detallesTexto.append(String.format("Mejora: %.2f%%\n\n", mejora));
 	            
 	            if (tiempoSinPoda > 0 && tiempoConPoda > 0) {
 	                double aceleracion = (double) tiempoSinPoda / tiempoConPoda;
 	                detallesTexto.append(String.format("Aceleración: %.2fx\n", aceleracion));
 	                
-	                int caminosReducidos = caminosSinPoda - caminosConPoda;
-	                double reduccion = ((double) caminosReducidos / caminosSinPoda) * 100;
-	                detallesTexto.append(String.format("Reducción de caminos explorados: %.2f%%\n", reduccion));
+	                int LlamadasReducidas = LlamadasRecursivasPoda - LlamadasRecursivas;
+	                double reduccion = ((double) LlamadasReducidas / LlamadasRecursivas) * 100;
+	                detallesTexto.append(String.format("Reducción de llamadas recursivas: %.2f%%\n", reduccion));
 	            }
 	            
 	            detalles.setText(detallesTexto.toString());
@@ -254,9 +268,9 @@ public class PanelResultados extends JPanel implements Observer {
 	        }
 	    }
 	    
-	    public void agregarResultado(String tamanoGrilla, long tiempoSinPoda, long tiempoConPoda,
-	                         int caminosSinPoda, int caminosConPoda) {
-	        
+
+	    public void agregarResultado(String tamanoGrilla, long tiempoSinPoda, long tiempoConPoda, int caminosEncontrados , int LlamadasRecursivas, int LlamadasRecursivasConPoda) {
+
 	        double mejora = 0;
 	        if (tiempoSinPoda > 0) {
 	        	mejora = ((double)(tiempoSinPoda - tiempoConPoda) / tiempoSinPoda) * 100;
@@ -266,27 +280,16 @@ public class PanelResultados extends JPanel implements Observer {
 	            tamanoGrilla,
 	            tiempoSinPoda,
 	            tiempoConPoda,
-	            caminosSinPoda,
-	            caminosConPoda,
+	            caminosEncontrados,
+	            LlamadasRecursivas,
+	            LlamadasRecursivasConPoda,
 	            mejora
 	        };
 	        
 	        tablaModelo.addRow(datosFila);
-//	        actualizarEstadisticas();
+
 	    }
-	    
-	    public void agregarResultadoFuerzaBruta(String tamanoGrilla, long tiempoEjec, int caminosExplorados) {
-	        Object[] datosFila = {
-	            tamanoGrilla,
-	            tiempoEjec,
-	            "N/A",
-	            caminosExplorados,
-	            "N/A",
-	            0.0
-	        };
-	        
-	        tablaModelo.addRow(datosFila);
-	    }
+
 	    
 	    public void limpiarResultados() {
 	        tablaModelo.setRowCount(0);
@@ -352,7 +355,7 @@ public class PanelResultados extends JPanel implements Observer {
 
 	    
 	    
-	    private void actualizarPanelEstadisticas(int pEjecutadas, long tPoda, long tSpoda) {
+	    private void actualizarPanelEstadisticas( long tPoda, long tSpoda) {
 
 	    	int contFila = tablaModelo.getRowCount();
 	        
@@ -369,25 +372,24 @@ public class PanelResultados extends JPanel implements Observer {
 	    }
 	    
 	    
-	    
 		@Override
-		public void actualizar(CaminoValido cv) {
+		public void actualizar() {
 		    int filas = grilla.getMatriz().length;
 		    int cols = grilla.getMatriz()[0].length;
 		    String tamanioGrilla = filas + "x" + cols;
 
-		    long tiempoSinPoda = cv.getTiempoTotal();
-		    long tiempoConPoda = cv.getTiempoTotalPoda();
-		    int caminosSinPoda = cv.getCaminosEncontrados();
-		    int caminosConPoda = cv.getCaminosEncontrados();
-		    int pEjecutadas = cv.getLlamadasRecursivas();
+		    long tiempoSinPoda = caminoOptimo.getTiempoTotal();
+		    long tiempoConPoda = caminoOptimo.getTiempoTotalPoda();
+
+		    int caminosEntontados = caminoOptimo.getCaminosEncontradosPoda();
+		    int llamadasRecursivas = caminoOptimo.getLlamadasRecursivas();
+		    int llamadasRecursivasPoda = caminoOptimo.getLlamadasRecursivasPoda();
 		    
-		    agregarResultado(tamanioGrilla, tiempoSinPoda, tiempoConPoda, caminosSinPoda, caminosConPoda);
-		    actualizarPanelEstadisticas(pEjecutadas,tiempoConPoda, tiempoSinPoda);
-		    
-		    if (mostrarDetalles) {
-	            mostrarUltimaEjecucion();
-	        }
+		    agregarResultado(tamanioGrilla, tiempoSinPoda, tiempoConPoda, caminosEntontados, llamadasRecursivas, llamadasRecursivasPoda);
+		    actualizarPanelEstadisticas(tiempoConPoda, tiempoSinPoda);
+
+	        mostrarUltimaEjecucion();
+
 		    
 }
 }

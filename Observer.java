@@ -1,7 +1,7 @@
-package tp3_p3;
+package logica;
 
 public interface Observer {
 
-	void actualizar(CaminoValido caminoValido);
+	void actualizar();
 
 }

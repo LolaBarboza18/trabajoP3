@@ -1,4 +1,4 @@
-package tp3_p3;
+package interfaz;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
